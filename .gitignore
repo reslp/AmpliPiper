@@ -1,0 +1,9 @@
+/envs/
+/logs/
+/scripts/__pycache__/
+/scripts/bold_api/__pycache__/
+/testdata/data/samples.csv
+/testdata/results/
+/scripts/display_new.py
+/scripts/altersvg_old.py
+#/testdata/main.sh

@@ -1,0 +1,4 @@
+IND1,/path/to/AmpliPiper/tutorial/tutorial_resources/data/individual1.fastq.gz
+IND2,/path/to/AmpliPiper/tutorial/tutorial_resources/data/individual2.fastq.gz
+IND3,/path/to/AmpliPiper/tutorial/tutorial_resources/data/individual3.fastq.gz
+IND4,/path/to/AmpliPiper/tutorial/tutorial_resources/data/individual4.fastq.gz
