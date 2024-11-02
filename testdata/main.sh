@@ -28,10 +28,11 @@ done
 bash ${WD}/shell/AmpliPiper.sh \
     --samples ${WD}/testdata/data/samples.csv \
     --primers ${WD}/testdata/data/primers.csv \
-    --output ${WD}/testdata/results/demo \
+    --output ${WD}/testdata/results/demo2 \
     --quality 10 \
-    --nreads 1000 \
-    --similar_consensus 97 \
+    --nreads 200 \
+    --blast '<your@email.com>' \
+    --similar_consensus 97.5 \
     --threads 200 \
     --kthreshold 0.05 \
     --minreads 50 \

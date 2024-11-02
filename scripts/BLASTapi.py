@@ -1,104 +1,154 @@
-from Bio.Blast import NCBIWWW
-from argparse import ArgumentParser
-from Bio import SeqIO
-import gzip
+
+import time
+from Bio import SeqIO, Entrez, Blast
 from Bio.Blast import NCBIXML
+from argparse import ArgumentParser
+import gzip
 import os
-
-argparse = ArgumentParser()
-argparse.add_argument(
-    "-i", "--infile", help="Path to input file with sequences", required=True)
-argparse.add_argument(
-    "-o", "--outfile", help="Path to output file with sequences", required=True)
+from collections import defaultdict as d
 
 
-args = argparse.parse_args()
-
-
-inf = args.infile
+def parse_arguments():
+    """Parse command line arguments."""
+    parser = ArgumentParser(
+        description="BLAST sequence analyzer with taxonomy ID retrieval")
+    parser.add_argument(
+        "-i", "--infile", help="Path to input file with sequences", required=True)
+    parser.add_argument(
+        "-o", "--outfile", help="Path to output file for BLAST results", required=True)
+    parser.add_argument(
+        "-e", "--email", help="Email for Entrez (required for NCBI access)", required=True)
+    return parser.parse_args()
 
 
 def load_data(infile):
-    """Load data from infile if it is in fasta format (after having unzipped it, if it is zipped)"""
-    if infile.endswith(".gz"):  # If file is gzipped, unzip it
-        y = gzip.open(infile, "rt", encoding="latin-1")
-        # Read file as fasta if it is fasta
-        if infile.endswith(".fasta.gz") or infile.endswith(".fna.gz") or infile.endswith(".fas.gz") or infile.endswith(".fa.gz"):
-            records = SeqIO.parse(y, "fasta")
-            sequences = {}
-            for record in records:
-                sequences.update({str(record.id): str(record.seq)})
-            y.close()
-            return sequences
-        else:
-            y.close()
-            raise ValueError("File is the wrong format")
-    # Read file directly as fasta if it is a not zipped fasta: handle also more uncommon extensions :-)
-    elif infile.endswith(".fasta") or infile.endswith(".fna") or infile.endswith(".fas") or infile.endswith(".fa"):
-        with open(infile, "r") as y:
-            records = SeqIO.parse(y, "fasta")
-            sequences = {}
-            for record in records:
-                sequences.update({str(record.id): str(record.seq)})
-            y.close()
-            return sequences
+    """Load sequences from the input file, unzipping if necessary."""
+    if infile.endswith(".gz"):
+        with gzip.open(infile, "rt", encoding="latin-1") as file:
+            if infile.endswith((".fasta.gz", ".fna.gz", ".fas.gz", ".fa.gz")):
+                return {record.id: str(record.seq) for record in SeqIO.parse(file, "fasta")}
+            else:
+                raise ValueError("Unsupported file format for gzipped file")
+    elif infile.endswith((".fasta", ".fna", ".fas", ".fa")):
+        with open(infile, "r") as file:
+            return {record.id: str(record.seq) for record in SeqIO.parse(file, "fasta")}
     else:
-        raise ValueError("File is the wrong format")
+        raise ValueError("Unsupported file format")
+
+
+def get_taxonomy_id(hit_id):
+    """Fetch the genus and species name from NCBI for a given hit ID."""
+    try:
+        # Extract just the accession part if needed (e.g., remove gi| and any prefixes)
+        clean_id = hit_id.split('|')[-2] if '|' in hit_id else hit_id
+
+        handle = Entrez.efetch(db="nucleotide", id=clean_id,
+                               rettype="gb", retmode="text")
+        for record in SeqIO.parse(handle, "genbank"):
+            if record.annotations.get("organism"):
+                # Extract full genus and species from the organism field
+                organism_name = record.annotations["organism"]
+                parts = organism_name.split()
+                if len(parts) >= 2:
+                    genus = parts[0]
+                    species = parts[1]
+                    return f"{genus} {species}"
+                else:
+                    return organism_name  # Return what is available
+        handle.close()
+    except Exception as e:
+        print(f"Failed to retrieve taxonomy ID for {hit_id}: {e}")
+        return "N/A"
+    finally:
+        time.sleep(0.5)  # Introduce a delay of 0.5 seconds between requests
+
+
+def run_blast_and_save_results(infile, outfile):
+    """Run BLAST for sequences in the input file and save results to the output file."""
+    print("Loading data...")
+    query_sequences = load_data(infile)
+    print("Data loaded successfully.")
+
+    result_file_path = os.path.join(outfile)
+
+    print("Starting BLAST for full sequence")
+    result_handle = Blast.qblast("blastn", "nt", open(infile).read())
+
+    data = d(lambda: d(list))
+
+    blast_full = NCBIXML.parse(result_handle)
+    with open(result_file_path, "a") as result_file:
+        print("Parsing BLAST results")
+        for blast_record in blast_full:
+            qlen = blast_record.query_length
+            C = 1
+            for alignment in blast_record.alignments:
+                if C > 4:
+                    break
+                C += 1
+                taxonomy_id = get_taxonomy_id(alignment.hit_id)
+                HSP = []
+                for hsp in alignment.hsps:
+                    title = alignment.title.replace(",", " -")
+                    perc_identity = 100 * \
+                        round(hsp.identities / hsp.align_length, 4)
+                    query_coverage = 100 * \
+                        round((hsp.query_end - hsp.query_start + 1) / qlen, 4)
+                    HSP.append(perc_identity)
+                data[blast_record.query][taxonomy_id].append(max(HSP))
+
+    result_handle.close()
+    print("Finished parsing results")
+    print("Writing BLAST results")
+
+    result_file = open(result_file_path, "w")
+    # Processing data to count occurrences and find the highest percentage for each result
+    result_dict = {}
+    for test, results in data.items():
+        result_dict[test] = {}
+        for result, percentages in results.items():
+            count = len(percentages)
+            highest_percentage = round(max(percentages), 2)
+            result_dict[test][result] = {
+                'count': count,
+                'highest_percentage': highest_percentage
+            }
+
+    # Find the maximum number of results across all tests for formatting
+    max_results_per_test = max(len(results)
+                               for results in result_dict.values())
+
+    # Print header
+    header = ["SAMPLE"] + \
+        [f"Taxon{i + 1} (sim%)" for i in range(max_results_per_test)]
+    result_file.write(",".join(header) + "\n")
+
+    # Print results for each test
+    for test, results in result_dict.items():
+        sorted_results = sorted(
+            results.items(), key=lambda x: x[1]['highest_percentage'], reverse=True)
+        row = [test]  # Start row with the test/sample name
+        for i, (result, info) in enumerate(sorted_results):
+            # Create the formatted string for each result
+            entry = f"{result} ({info['highest_percentage']}%); count = {info['count']}"
+            row.append(entry)
+
+        # Fill the rest of the row with empty columns if needed
+        row += [""] * (max_results_per_test - len(sorted_results))
+
+        # Join the row without adding a comma after the last entry
+        formatted_row = ",".join(row)
+        if formatted_row.endswith(","):
+            formatted_row = formatted_row[:-1]
+
+        # Write the formatted row to the file
+        result_file.write(formatted_row + "\n")
+
+    result_file.close()
+    print("Finished writing results")
 
 
 if __name__ == "__main__":
-    print("Loading data...")
-
-    # Load query sequences from the input file
-    query_sequences = load_data(inf)
-    print("Loaded")
-
-    # Prepare the output file for BLAST results
-    result_file_path = os.path.join(args.outfile)
-    result_file = open(result_file_path, "w")
-
-    # Write the header to the output file
-    result_file.write(
-        "QUERY_ID,HIT_ID,HIT_LENGTH,PERC_IDENTITY,GAPS,QUERY_COVERAGE,EVAL\n")
-    result_file.close()
-
-    # Iterate through each query sequence
-    for query_sequence in list(query_sequences.keys()):
-
-        # Perform a BLAST search against the NCBI nr database
-        print(f"Starting BLAST for sequence {query_sequence}")
-        result_handle = NCBIWWW.qblast(
-            "blastn", "nt", query_sequences[query_sequence])
-
-        # Parse and print the result
-        blast_record = NCBIXML.read(result_handle)
-
-        # Get the length of the query sequence
-        qlen = blast_record.query_length
-
-        # Open the result file in append mode
-        result_file = open(result_file_path, "a")
-        print(f"Writing BLAST for sequence {query_sequence}")
-
-        # Process each alignment and its associated HSPs
-        for alignment in blast_record.alignments:
-            for hsp in alignment.hsps:
-                title = alignment.title.replace(",", " -")
-
-                # Calculate percentage identity, query coverage, and round the values
-                perc_identity = 100 * \
-                    round(int(hsp.identities) / int(hsp.align_length), 4)
-                query_coverage = 100 * \
-                    round((int(hsp.query_end) -
-                          int(hsp.query_start) + 1) / int(qlen), 4)
-
-                # Write the result to the output file
-                result_file.write(
-                    f"{query_sequence},{title},{alignment.length},{perc_identity},{hsp.gaps}/{int(hsp.align_length)},{query_coverage},{hsp.expect}\n")
-
-        result_handle.close()
-        result_file.close()
-        print("Finished")
-
-
-# https://drive.google.com/file/d/1-ysk9prcplU0vnciteZSwQ22YKcS4wea/view?usp=sharing
+    args = parse_arguments()
+    Entrez.email = args.email  # Set the email for Entrez
+    run_blast_and_save_results(args.infile, args.outfile+"/final.csv")

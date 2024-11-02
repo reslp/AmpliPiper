@@ -109,8 +109,8 @@ do
         usage
         ;;
     -b | --blast)
-        blast="yes"
-        shift 1
+        blast="$2"
+        shift 2
         ;;
     -c | --similar_consensus)
         similarconsensus="$2"
@@ -281,6 +281,14 @@ if
         ;
 then
     mapfile -t EXCLUDE < <(awk -F',' '{print $1$2}' "${exclude}")
+fi
+
+## set SampleID Search engine:
+
+if [[ ${blast} != "no" ]]; then
+    SE="BLAST"
+else
+    SE="BOLD"
 fi
 
 #################### Start executing if all parameters set and input files available
@@ -555,20 +563,30 @@ while IFS=$"," read -r primername fwd rev size; do
             [[ ${PRINT} == 0 ]] \
                 ;
         then
-            echo "***** Species ID from BOLD *****"
+            echo "***** Species ID from ${SE} *****"
             PRINT=1
         fi
 
-        ## use BOLD API for Species identification
+        ## use BOLD/BLAST API for Species identification
         conda activate ${wd}/envs/python_dependencies
-        mkdir -p ${output}/results/SpeciesID/BOLD/${primername}
-        ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/bold_api/BOLDapi.py \
-            -i ${output}/results/haplotypes/${primername}/${primername}_aln.fasta \
-            -p ${primername} \
-            -c ${wd}/scripts/style.css \
-            -n 10 \
-            -o ${output}/results/SpeciesID/BOLD/${primername} \
-            >>${output}/log/SpecID/${primername}_SI.log 2>&1
+
+        if [[ ${blast} != "no" ]]; then
+            mkdir -p ${output}/results/SpeciesID/${SE}/${primername}/summarized_outputs
+            ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/BLASTapi_new.py \
+                -i ${output}/results/haplotypes/${primername}/${primername}_aln.fasta \
+                -e ${blast} \
+                -o ${output}/results/SpeciesID/${SE}/${primername}/summarized_outputs \
+                >>${output}/log/SpecID/${primername}_SI.log 2>&1
+        else
+            mkdir -p ${output}/results/SpeciesID/${SE}/${primername}
+            ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/bold_api/BOLDapi.py \
+                -i ${output}/results/haplotypes/${primername}/${primername}_aln.fasta \
+                -p ${primername} \
+                -c ${wd}/scripts/style.css \
+                -n 10 \
+                -o ${output}/results/SpeciesID/${SE}/${primername} \
+                >>${output}/log/SpecID/${primername}_SI.log 2>&1
+        fi
         conda deactivate
 
         echo ${primername} "finished"
@@ -580,38 +598,13 @@ done <${primers}
 ## test if IDs found for samples for any marker, perferably COX1
 for locus in COX1 ITS MATK_RBCL; do
     if
-        [[ -f ${output}/results/SpeciesID/BOLD/${locus}/summarized_outputs/final.csv ]] \
+        [[ -f ${output}/results/SpeciesID/${SE}/${locus}/summarized_outputs/final.csv ]] \
             ;
     then
         ID=${locus}
         break
     fi
 done
-
-## Species identification with NCBI Blast if parameter set
-if
-    [[ $blast == "yes" ]] \
-        ;
-then
-
-    echo "***** Obtain Species ID via BLAST against the NCBI nt database *****"
-
-    conda activate ${wd}/envs/python_dependencies
-
-    while IFS=$"," read -r primername fwd rev size; do
-        mkdir -p ${output}/results/SpeciesID/NCBI/${primername}
-        cd ${output}/results/SpeciesID/NCBI/${primername}
-
-        ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/BLASTapi.py \
-            -i ${output}/results/haplotypes/${primername}/${primername}.fasta \
-            -o ${output}/results/SpeciesID/NCBI/${primername}/${primername}.blast \
-            >>${output}/log/SpecID/${primername}_SI.log 2>&1
-
-        echo "locus ${primername} finished"
-    done <${primers}
-
-    conda deactivate
-fi
 
 ## Species delineation with ASAP for all concatenated Haplotypes
 echo "***** concatenate all loci *****"
@@ -692,13 +685,13 @@ while IFS=$"," read -r primername fwd rev size; do
         ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameTreeLeaves.py \
             --primername ${primername} \
             --input ${output}/results/tree/${primername}/${primername}.treefile \
-            --name ${output}/results/SpeciesID/BOLD/${ID}/summarized_outputs/final.csv
+            --name ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv
 
     fi
 
     ## rename outgroup
     outgroupNew=$(${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameOutgroup.py \
-        --input ${output}/results/SpeciesID/BOLD/${ID}/summarized_outputs/final.csv \
+        --input ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv \
         --haplotype ${output}/results/haplotypes/${primername}/${primername}_aln.fasta \
         --primername ${primername} \
         --samplenames ${outgroup})
@@ -794,12 +787,12 @@ then
         ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameTreeLeaves.py \
             --primername combined \
             --input ${output}/results/tree/Combined/Combined.treefile \
-            --name ${output}/results/SpeciesID/BOLD/${ID}/summarized_outputs/final.csv
+            --name ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv
 
     fi
 
     outgroupNew=$(${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameOutgroup.py \
-        --input ${output}/results/SpeciesID/BOLD/${ID}/summarized_outputs/final.csv \
+        --input ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv \
         --haplotype ${output}/results/haplotypes/Combined/Combined.fasta \
         --primername Combined \
         --samplenames ${outgroup})
@@ -985,7 +978,7 @@ ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/DisplayOutput.py \
 conda deactivate
 
 if [[ -d ${output}/results/SpeciesID ]]; then
-    for PA in ${output}/results/SpeciesID/BOLD/*; do
+    for PA in ${output}/results/SpeciesID/${SE}/*; do
         IDlocus=${PA##*/}
         cp ${PA}/summarized_outputs/final.csv ${output}/Output/summary/SpeciesID_${IDlocus}.csv
     done
