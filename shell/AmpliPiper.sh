@@ -11,7 +11,7 @@ usage() {
     -s | --samples: Provide the path to a csv file that contains the names (without extension) and the path of the fastq files containing the raw reads that will be analysed
     
     OPTIONAL ARGUMENTS:
-    -b | --blast: Enable BLAST search for species identification; CAUTION! this may take VERY long (default: disabled)
+    -b | --blast: Use BLAST instead of BOLD for species identification by setting this parameter and by providing an email address for using NCBI Entrez (default: disabled)
     -c | --similar_consensus: Enable BLAST search for species identification; CAUTION! this may take VERY long (default: 96)
     -e | --exclude: Provide a text file with samples and loci to exclude from the analyses. Each row contains one comma-separated sample-ID and locus-ID to be excluded.
     -f | --force: Force overwriting the previous ouput folder (default: Cowardly refusing to overwrite)

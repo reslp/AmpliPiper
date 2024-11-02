@@ -30,6 +30,7 @@ AmpliPiper is a comprehensive workflow based on *BASH scripting*, *Python* and *
 * [`NanoFilt`](https://github.com/wdecoster/nanofilt) for read filtering
 * [`amplicon_sorter.py`](https://github.com/avierstr/amplicon_sorter) for consensus sequence reconstruction
 * [`bold_api.py`](https://v3.boldsystems.org/index.php/api_home) for species identification using the BOLD API
+* [`BLASTapi.py`](https://biopython.org/docs/dev/Tutorial/chapter_blast.html) BLAST with Bio.Python for species identification
 * [`iqtree`](http://www.iqtree.org/) for maximum likelihood tree reconstruction
 * [`astral`](https://github.com/smirarab/ASTRAL) for concatenated tree reconstruction
 * [`asap`](https://bio.tools/asap-assemble) for species delineation
@@ -107,7 +108,7 @@ bash AmpliPiper.sh -s <samples_csv> -p <primers_csv> -o <output_folder> [options
 
 **Optional Arguments**
 
-* `-b` or `--blast`: Enable BLAST search for species identification. :warning: may take VERY long :warning: (default: disabled).
+* `-b` or `--blast`: Enable BLAST search for species identification. When setting this parameter, you need to provide an email address (e.g., `--blast your@email.com`) for using NCBI entrez to retrieve taxonomic information for the BLAST hits (default: disabled).
 * `-e` or `--exclude`: Provide a text file with samples and loci to exclude from the analysis. Each row should contain the ID of a sample to be excluded. Names need to be identical to the IDs in `samples.csv`
 * `-f` or `--force`: Force overwrite the output folder if it already exists (default: cowardly refusing to overwrite).
 * `-k` or `--kthreshold`: Define the threshold *k* for the maximum allowed proportion of mismatches for primer alignment during demultiplexing (default: 0.05).

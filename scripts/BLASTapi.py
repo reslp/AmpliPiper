@@ -66,7 +66,6 @@ def get_taxonomy_id(hit_id):
 def run_blast_and_save_results(infile, outfile):
     """Run BLAST for sequences in the input file and save results to the output file."""
     print("Loading data...")
-    query_sequences = load_data(infile)
     print("Data loaded successfully.")
 
     result_file_path = os.path.join(outfile)
@@ -80,20 +79,18 @@ def run_blast_and_save_results(infile, outfile):
     with open(result_file_path, "a") as result_file:
         print("Parsing BLAST results")
         for blast_record in blast_full:
-            qlen = blast_record.query_length
-            C = 1
+            C = 0
             for alignment in blast_record.alignments:
-                if C > 4:
+                # only use 10 best Hits
+                if C > 10:
                     break
                 C += 1
+                # get the taxonomic information for the hit using NCBI Entrez
                 taxonomy_id = get_taxonomy_id(alignment.hit_id)
                 HSP = []
                 for hsp in alignment.hsps:
-                    title = alignment.title.replace(",", " -")
                     perc_identity = 100 * \
                         round(hsp.identities / hsp.align_length, 4)
-                    query_coverage = 100 * \
-                        round((hsp.query_end - hsp.query_start + 1) / qlen, 4)
                     HSP.append(perc_identity)
                 data[blast_record.query][taxonomy_id].append(max(HSP))
 
