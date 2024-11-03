@@ -79,7 +79,7 @@ def run_blast_and_save_results(infile, outfile):
     with open(result_file_path, "a") as result_file:
         print("Parsing BLAST results")
         for blast_record in blast_full:
-            C = 0
+            C = 1
             for alignment in blast_record.alignments:
                 # only use 10 best Hits
                 if C > 10:
