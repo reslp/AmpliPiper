@@ -40,7 +40,7 @@ if os.path.isfile(options.IN):
     for l in load_data(options.IN):
         if l.startswith("SAMPLE"):
             continue
-        a = l.rstrip().split(",")
+        a = l.rstrip().rstrip(",").split(",")
         ID = "_".join(a[0].split("_")[:-1])
         # ID = a[0]
         if len(a) == 1:

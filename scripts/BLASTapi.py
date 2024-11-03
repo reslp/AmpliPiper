@@ -137,7 +137,7 @@ def run_blast_and_save_results(infile, outfile):
         formatted_row = ",".join(row)
 
         # Write the formatted row to the file
-        result_file.write(formatted_row.rstrip(",") + "\n")
+        result_file.write(formatted_row + "\n")
 
     result_file.close()
     print("Finished writing results")
