@@ -572,7 +572,7 @@ while IFS=$"," read -r primername fwd rev size; do
 
         if [[ ${blast} != "no" ]]; then
             mkdir -p ${output}/results/SpeciesID/${SE}/${primername}/summarized_outputs
-            ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/BLASTapi_new.py \
+            ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/BLASTapi.py \
                 -i ${output}/results/haplotypes/${primername}/${primername}_aln.fasta \
                 -e ${blast} \
                 -o ${output}/results/SpeciesID/${SE}/${primername}/summarized_outputs \
