@@ -31,7 +31,7 @@ bash ${WD}/shell/AmpliPiper.sh \
     --output ${WD}/testdata/results/demo2 \
     --quality 10 \
     --nreads 200 \
-    --blast capoony@gmail.com \
+    --blast steindl.sonja@gmail.com \
     --similar_consensus 97.5 \
     --threads 200 \
     --kthreshold 0.05 \

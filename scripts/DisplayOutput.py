@@ -468,6 +468,10 @@ allparameters = f"""
     <td>Partition strategy</td>
     <td>{parameters.split(",")[9]}</td>
   </tr>
+  <tr>
+    <td>Outgroup Definition</td>
+    <td>{parameters.split(",")[10]}</td>
+  </tr>
 </table> 
 """
 

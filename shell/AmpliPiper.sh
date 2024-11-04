@@ -237,7 +237,7 @@ fi
 
 ###
 
-parametersettings="${quality},${similarconsensus},${nreads},${sizerange},${minreads},${threads},${kthres},${force},${blast},${partition}"
+parametersettings="${quality},${similarconsensus},${nreads},${sizerange},${minreads},${threads},${kthres},${force},${blast},${partition},${outgroup}"
 ###
 
 ## make sure the EOL character is \n and NOT \r\n in the samples and primers files ;-)
