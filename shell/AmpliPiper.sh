@@ -824,7 +824,7 @@ cat ${output}/results/tree/*/*.treefile >${output}/results/astraltree/input.tree
 ## test if ANY trees available in file
 if [[ ! -z $(grep '[^[:space:]]' ${output}/results/astraltree/input.tree) ]]; then
 
-    echo "***** reconstruct astral tree across all loci *****"
+    echo "***** reconstruct ASTRAL tree across all loci *****"
 
     if
         [[ $(($(cat ${samples} | wc -l) / 3)) -gt 8 ]] \

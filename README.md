@@ -122,20 +122,26 @@ bash AmpliPiper.sh -s <samples_csv> -p <primers_csv> -o <output_folder> [options
 #### Example command
 
 ```bash
-bash <path_to>/AmpliPiper/shell/AmpliPiper.sh \
-    --samples <path_to>/test/data/samples.csv \
-    --primers <path_to>/test/data/primers.csv \
-    --output <path_to>/test/results/testresults \
-    --quality 2 \
-    --nreads 500 \
-    --sizerange 250 \
-    --minreads 100 \
-    --kthres 0.08
-    --threads 10 \
+bash <path_to>shell/AmpliPiper.sh \
+    --samples <path_to>/testdata/data/samples.csv \
+    --primers <path_to/testdata/data/primers.csv \
+    --output <path_to>/testdata/results/demo \
+    --quality 10 \
+    --nreads 1000 \
+    --blast your@email.com \
+    --similar_consensus 97 \
+    --threads 200 \
+    --kthreshold 0.05 \
+    --minreads 50 \
+    --sizerange 100 \
+    --outgroup He_mor_41 \
     --force
+
 ```
 
-This will execute the pipeline and save the output in the `testresults` folder.
+This will execute the pipeline and save the output in the `demo` folder. 
+
+If you want to test the pipeline on a test dataset, please check out the `testdata/` folder within this repository and execute the commands in the `testdata/main.sh` shell script.
 
 
 #### Analysis steps
@@ -155,27 +161,34 @@ This will execute the pipeline and save the output in the `testresults` folder.
 Output directory will be structured like this:
 
 ```bash
-testresults
+demo
 ├── data
 │   ├── demultiplexed
 │   ├── filtered
 │   └── raw
 ├── log
-│   ├── SpecDelim
-│   ├── SpecID
 │   ├── ampliconsorter
 │   ├── demulti
 │   ├── html
+│   ├── SpecDelim
+│   ├── SpecID
 │   ├── summary
-│   ├── tree
 │   └── variantcalling
 ├── results
+│   ├── astraltree
+│   ├── consensus_seqs
+│   ├── haplotypes
+│   ├── html
+│   ├── SpeciesDelim
+│   ├── SpeciesID
+│   ├── summary
+|   └── tree
+├── Output
 │   ├── SpeciesDelim
 │   ├── SpeciesID
 │   ├── astraltree
 │   ├── consensus_seqs
 │   ├── haplotypes
-│   ├── html
 │   ├── summary
 │   ├── tree
 |   └── results.html
@@ -187,7 +200,7 @@ testresults
 You will see a summary of the results by displaying `results.html` in your browser, for example:
 
 ```bash
-firefox testresults/results.html
+firefox testresults/Output/results.html
 ```
 See the [RESULTS explanation page](https://astrabert.github.io/AmpliPiper-docs/docs/navigation-structure/) in the [complete_documentation](https://astrabert.github.io/AmpliPiper-docs/) to get a thorough breakdown of the results.
 
@@ -196,11 +209,13 @@ See the [RESULTS explanation page](https://astrabert.github.io/AmpliPiper-docs/d
 **License**
 -------
 
-AMPLIPIPER is an [open source project](./LICENSE).
+AMPLIPIPER is an [open source project](./LICENSE) licenced under [GPL3](./LICENSE).
 
 **Acknowledgments**
 ---------------
 
 We wish to thank all the amazing people that supported the project and shared advice or opinions about it, as well as all the teams and people behind the software employed in our pipeline.
 
-This project is being developed as part of [TETTRIs - Task 6.2, WP6](https://tettris.eu).
+This project has been funded and is being developed as part of [TETTRIs - Task 6.2, WP6](https://tettris.eu).
+
+![tettris](./imgs/tettris.png) ![nhm](./imgs/nhm.svg.png)
