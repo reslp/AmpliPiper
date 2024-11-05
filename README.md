@@ -1,7 +1,7 @@
 <div align="center">
    <img src="https://img.shields.io/badge/Language-Bash-Green" alt="Static Badge">
    <img src="https://img.shields.io/badge/Production_status-Beta-green" alt="Static Badge">
-   <img src="https://img.shields.io/badge/Release-v0.1.0_beta-purple" alt="Static Badge">
+   <img src="https://img.shields.io/badge/Release-v0.2.0_beta-purple" alt="Static Badge">
    <img src="https://img.shields.io/badge/Requires-Mamba_and_Conda-red" alt="Static Badge">
    <img src="https://img.shields.io/badge/Supported_platforms-linux-brown" alt="Static Badge">
    <!-- <div>
