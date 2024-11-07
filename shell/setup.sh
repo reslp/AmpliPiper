@@ -1,7 +1,37 @@
 ## Install all required software
 
+## function to assess realpath to setup.sh
+realpath_custom() {
+    local path="$1"
+
+    # Check if the path is absolute or relative
+    if [[ "$path" != /* ]]; then
+        path="$PWD/$path"
+    fi
+
+    # Normalize the path by resolving '..' and '.'
+    while [[ "$path" =~ (/[^/]+/\.{2}|/\./|//) ]]; do
+        path="${path//\/.\//\/}"             # Replace '/./' with '/'
+        path="${path//\/\/+/\/}"             # Replace '//' with '/'
+        path="${path/\/[^\/]+\/\.\.\/\//\/}" # Resolve '/../'
+    done
+
+    # Resolve symlinks
+    while [ -L "$path" ]; do
+        link=$(readlink "$path")
+        if [[ "$link" == /* ]]; then
+            path="$link"
+        else
+            path="${path%/*}/$link"
+        fi
+    done
+
+    # Output the final resolved path
+    echo "$path"
+}
+
 ## change to home directory of the shell folder which contains the setup script
-tmp=$(realpath $(dirname $0))
+tmp=$(realpath_custom $(dirname $0))
 BASEDIR=${tmp%/*}
 echo "Installing necessary software"
 echo "*********************"
