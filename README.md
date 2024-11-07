@@ -96,10 +96,6 @@ CTYB,GATGCCTCAAGCCCTCCTA,AAGATTTCCACGAGCATACCTC,780
 
 ### Run the pipeline
 
-To run the pipeline, use the following command:
-```
-bash AmpliPiper.sh -s <samples_csv> -p <primers_csv> -o <output_folder> [options]
-```
 #### Required Arguments
 
 * `-s` or `--samples`: Provide the path to a CSV file containing the names and paths to the raw FASTQ files for each sample.
@@ -121,8 +117,10 @@ bash AmpliPiper.sh -s <samples_csv> -p <primers_csv> -o <output_folder> [options
 
 #### Example command
 
+:warning: In the following command, make sure to **replace `<path_to>` with the actual path to your files** :warning:
+
 ```bash
-bash <path_to>shell/AmpliPiper.sh \
+bash <path_to>/shell/AmpliPiper.sh \
     --samples <path_to>/testdata/data/samples.csv \
     --primers <path_to/testdata/data/primers.csv \
     --output <path_to>/testdata/results/demo \
@@ -146,11 +144,13 @@ If you want to test the pipeline on a test dataset, please check out the `testda
 
 #### Analysis steps
 
-1. **Demultiplexing**: The pipeline uses `demultiplex_fastq.py` to demultiplex the raw fastq files based (1) on correct alignment of the primer sequences at the terminal ends of a raw FASTQ file and (2) on the expected lenngth of the amplicon .
+> :warning: _From the 7th of November, since BOLD upgraded from v4 to v5, the API service is migrating and thus unavailable. We advise that you use, for now, BLAST and, if you do not wish to perform species identification, we suggest to change the name of the loci (for example, from `COX1` to `COI`)._
+
+1. **Demultiplexing**: The pipeline uses `demultiplex_fastq.py` to demultiplex the raw fastq files based (1) on correct alignment of the primer sequences at the terminal ends of a raw FASTQ file and (2) on the expected length of the amplicon .
 2. **Filtering**: The pipeline uses `NanoFilt` to remove low-quality reads based on a PHRED-scaled quality threshold.
 3. **Consensus Sequence Reconstruction**: The pipeline uses `amplicon_sorter.py` to reconstruct consensus sequences for each locus and sample.
-4. **Choice of Haplotypes**: The pipeline uses `ChooseConsensus.py` to estimate the expected ploidy and chooses consensus haplotypes reconstructed with amplicon_sorter that match in frequency with the expected ploidy based on Chi-square tests.
-5. **Species Identification**: The pipeline uses `bold_api.py` to identify species based on the BOLD API using the consensus sequences either of **COX1**, **ITS** or **MATK_RBCL** amplicons.
+4. **Choice of Haplotypes**: The pipeline uses `ChooseConsensus.py` to estimate the expected ploidy and chooses consensus haplotypes reconstructed with amplicon_sorter that match in frequency with the expected ploidy based on maximum likelihood tests.
+5. **Species Identification**: The pipeline uses, as a default, `bold_api.py` to identify species based on the BOLD API using the consensus sequences either of **COX1**, **ITS** or **MATK_RBCL** amplicons. There is also the possibility to use BLAST API for the same loci, by setting the `--blast` flag: the two species identification services are mutually exclusive. 
 6. **Phylogenetic Analysis**: The pipeline uses `iqtree` to reconstruct maximum likelihood (ML) trees for each locus separately and for all loci combined. In addition, `astral` is used to reconstruct a concatenated tree across all loci based on the locus-specific ML-trees.
 7. **Genetic Distance Calculation**: The pipeline uses `treedistance.py` to calculate Robinson-Foulds distances between trees.
 8. **Species Delineation**: The pipeline uses `asap` to perform species delineation for each locus and the concatenated dataset (obtained with `MergeAln.py`).
