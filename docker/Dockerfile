@@ -1,14 +1,18 @@
-FROM conda/miniconda3:latest 
+ARG CONDA_VER=latest
+ARG MAMBA_VER=latest
 
-## Your local directory should be structured like this:
-## .
-## |__ envs/
-## |__ scripts/
-## |__ Dockerfile
-## |__ AmpliPiper.sh
+
+FROM mambaorg/micromamba:${MAMBA_VER} as mambabase
+FROM conda/miniconda3:${CONDA_VER}
+
+COPY --from=mambabase /usr/bin/micromamba /usr/bin/
+
+RUN echo "deb http://archive.debian.org/debian stretch main contrib non-free" > /etc/apt/sources.list && apt update && apt install -y git
 
 WORKDIR /app
 
 ADD . /app
 
-ENTRYPOINT ["/bin/bash", "AmpliPiper.sh"]
+RUN bash /app/shell/setup.sh
+
+ENTRYPOINT ["/bin/bash", "/app/shell/AmpliPiper.sh"]

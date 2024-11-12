@@ -1,14 +1,81 @@
-# How to set up Docker
+# AmpliPiper Docker image
 
-## Don't have Docker? No problem!
+![Docker](https://github.com/AstraBert/amplipiper/actions/workflows/docker-publish.yml/badge.svg)
 
-Install for **Debian-based** Linux distros:
+## What is Docker?
+
+[Docker](https://www.docker.com/) is a platform that help developers to get **faster**, more **generalized** and **packaged** deployments and distributions for their applications.
+
+It can be regarded as a **DevOps** (Developement Operations) technology, as it is aimed at **easing and accelerating** shipping processes and times.
+
+Docker is **cross-platform** (available on Linux, Windows and MacOs) and OS-independent as its main feature is allowing developers to build **isolated environments** (virtual machines) in which to run other softwares without having any conflict or versioning/platform-specific problem with the local machine.
+
+It comes as a **command line** tool, but also, in its **Docker Desktop** implementation, as a Desktop application from which developers can comfortably check Docker's status on their computer.
+
+We will talk about downloading and getting to run Docker in the next paragraph, but feel free to explore Docker resources [on their website](https://docs.docker.com/)!
+
+## Get Docker
+
+### Docker on Windows
+
+[Docker on Windows](https://docs.docker.com/desktop/install/windows-install/) is only available as Docker Desktop, a Desktop application that manages _Docker engine_ (the technology that actually runs the virtual machines) through either **WSL2** or **Hyper-V**  as backend systems. 
+
+You need Windows 10 or 11 to make Docker work and, if you're using a _Windows Subsystem Linux_ (WSL), make sure to have upgraded it to WSL2. 
+
+For the installation, you should get the binary that best suits your Windows machine from the link at the beginning of this paragraph, and from there simply click on `Docker Desktop Installer.exe` and follow up as you are prompted by the installation interface.
+
+### Docker on MacOS
+
+[Docker on MacOS](https://docs.docker.com/desktop/install/mac-install/), as we said for Windows, can only be downloaded as Docker Desktop.
+
+Docker, for now, supports only the three latest releases of macOS, and requires at least 4GB RAM to run.
+
+You can get the binaries that most suit your platform from the link at the beginning of this paragraph, and then click on the `Docker.dmg` installer so obtained, dragging the Docker icon into the `Applications` folder.  Now you will have a `Docker.app`, which you will be able to initialize and set up following the prompts on the installation interface.
+
+### Docker on Linux
+
+There are [many supported platforms](https://docs.docker.com/engine/install/#supported-platforms) and many ways to install Docker for each one of them.
+
+**1. Ubuntu and Debian-flavored Linux distributions**
+
+You can simply run the following command:
 
 ```bash
 sudo apt update && sudo apt install docker.io
 ```
 
-Install for **CentOS-based** Linux distros:
+And check the installation by running:
+
+```bash
+sudo docker --version
+```
+
+This method **will not** install `docker-compose` or `docker-buildx` and, for the sake of completeness, we will report here how to [get them](https://docs.docker.com/compose/install/linux/):
+
+1. Start by getting Docker's official GPG Key:
+```bash
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+```
+
+2. Now add Docker and plugins to your `apt` repositories:
+```bash
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+```
+
+3. Now just install `compose` and `buildx`:
+```bash
+sudo apt-get install docker-compose-plugin docker-buildx-plugin
+```
+
+**2. CentOS-flavored Linux distributions**:
 
 ```bash
 ## Download rpm repo
@@ -24,76 +91,102 @@ sudo systemctl start docker
 
 Other installations processes [here](https://docs.docker.com/engine/install/)
 
-## Set up the local repository
+## Run AmpliPiper inside Docker
 
-You need to build your local repository in this way:
+### 1. Use Docker image directly
 
-```
- .
- |__ envs/
- |__ scripts/
- |__ Dockerfile
- |__ AmpliPiper.sh
-```
-
-In this sense, when you run AmpliPiper.sh from within this repository, it will immediately find `envs` and `scripts`.
-
-## Take a look to Dockerfile
-
-What does Dockerfile do?
-
-1. `FROM conda/miniconda3:latest`: Installs conda and python by pulling the latest miniconda image
-2. `WORKDIR /app`: Sets the directory where Docker will be looking when running our scripts
-3. `ADD . /app`: Adds your local folder to the working directory, which means that it will add AmpliPiper.sh, envs/ and scripts/ (everything that we need!)
-4. `ENTRYPOINT ["/bin/bash", "AmpliPiper.sh"]`: Executes AmpliPiper.sh whenever the Docker image is run
-
-## Build the image
-
-You can easily build the image from the Dockerfile: you just have to move to the directory where it is placed and run:
+For now AmpliPiper Docker image is available only for testing, and canbe obtained simply running from **PowerShell**/**CMD** (Windows), **Terminal** (macOS) and **integrated terminal** (Linux distros):
 
 ```bash
-docker build . -t nhmvienna/amplipiper:latest
+docker pull ghcr.io/astrabert/amplipiper:main
 ```
 
-Let's quickly break down the command:
+If it does not work on Linux for permission issues, you should run this as `sudo`.
 
-- `build` looks for a Dockerfile in the '.' directory, and executes all the commands inside it
-- `-t` flag stands for 'tag': as you can see, the tag has three portions:
-    
-    + the owner of the image (I put nhmvienna as an example, **but this portion is the only one that has to coincide with a registered Docker account**)
-    + the name of the image (amplipiper)
-    + the actual tag (or version, which is 'latest')
-
-## Push the image to Docker hub
-
-Once the build is complete, you may want to push the image to Docker hub:
+You can now run the image interactively:
 
 ```bash
-docker push nhmvienna/amplipiper:latest
+docker run -i \
+    -t \
+    ghcr.io/astrabert/amplipiper:main \
+    /bin/bash
 ```
 
-Depending on your internet connection and on the size of the image, this may take a while!
+But the so-created container will not contain any data fromn your local file-system. 
 
-## Run the image
+In order to inject your local file-system into a Docker container you need to mount a volume (`-v` flag), using a mapping syntax that is very simple: `/your/local/path:/docker/container/path` (this is **only an example**! Replace `/your/local/path` and `/docker/container/path` with actual and valid paths).
 
-If you were a new user and you did not build the image from scratch, you now would have to first pull the image from the hub:
+To test AmpliPiper, you can clone this repository and then mount it inside the container as volume:
 
 ```bash
-docker pull nhmvienna/amplipiper:latest
+# Clone the repository
+git clone https://github.com/nhmvienna/AmpliPiper.git
+
+docker run -i \
+    -t \
+    -v ./AmpliPiper/:/app/userdata/ \
+    ghcr.io/astrabert/amplipiper:main \
+    /bin/bash
 ```
 
-And the run it:
+Now all the content in your local `AmpliPiper` folder is stored under `/app/userdata`.
+
+### 2. Use `docker compose`
+
+Docker offers an integrated workflow that runs your images taking care of all the runtime arguments with a [`compose.yaml`](./compose.yaml) file. To run AmpliPiper container interactively, you just need to:
+
+- Modify the  `USERDATA_PATH` variable in the [`.env`](./.env) to match with the portion of your file-system you want to injcet into Docker
+- Use the two following commands:
 
 ```bash
-docker run nhmvienna/amplipiper:latest [OPTIONS] 
+docker compose up -d # Launch this command within the same directory in which you have the compose.yaml file
+docker exec -it $(docker ps -qf "name=amplipiper_container") /bin/bash
 ```
 
-You can pass all the options of the pipeline directly to the Docker run command!
+You'll find the volume you mounted in the container under `/app/userdata/`.
 
-If you wish to make the pipeline run in the background, you can also add the `-d` flag:
+## Test AmpliPiper
+
+While you are inside the container, now, you can try the test already available in this repo by running:
 
 ```bash
-docker run -d nhmvienna/amplipiper:latest [OPTIONS] 
+# define the path to your test folder
+WD='/app/userdata'
+
+# generate samples.csv file
+
+## print header for samples.csv
+printf "ID,PATH\n" >${WD}/testdata/data/samples.csv
+
+## loop through input FASTQ files
+for Filepath in ${WD}/testdata/reads/*fastq.gz; do
+
+    ## get Filename
+    Filename=${Filepath##*/}
+
+    ## get File ID
+    ID=${Filename%.fastq.gz*}
+
+    ## print to samples.csv
+    echo ${ID},${Filepath} >>${WD}/testdata/data/samples.csv
+done
+
+# run AmpliPiper
+bash /app/shell/AmpliPiper.sh \
+    -s /app/test/testdata/data/samples.csv \
+    -p /app/test/testdata/data/primers.csv \
+    -o /app/test/testdata/results/demo \
+    --quality 10 \
+    --nreads 1000 \
+    --blast your@email.com \
+    --similar_consensus 97 \
+    --threads 200 \
+    --kthreshold 0.05 \
+    --minreads 50 \
+    --sizerange 100 \
+    --outgroup He_mor_41 \
+    --force
 ```
 
-And you're done!
+You can find these instructions in [run.sh](./run.sh).
+
