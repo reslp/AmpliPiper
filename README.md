@@ -13,7 +13,7 @@
 
 ## AmpliPiper
 
-This README provides a quickstart to the pipeline: if you want to dive deeper, check out the [complete_documentation](https://astrabert.github.io/AmpliPiper-docs/).
+<This README provides a quickstart to the pipeline: if you want to dive deeper, check out the [complete_documentation](https://astrabert.github.io/AmpliPiper-docs/).>
 
 ### Flowchart
 
