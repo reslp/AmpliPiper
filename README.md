@@ -107,13 +107,16 @@ CTYB,GATGCCTCAAGCCCTCCTA,AAGATTTCCACGAGCATACCTC,780
 * `-b` or `--blast`: Enable BLAST search for species identification. When setting this parameter, you need to provide an email address (e.g., `--blast your@email.com`) for using NCBI entrez to retrieve taxonomic information for the BLAST hits (default: disabled).
 * `-e` or `--exclude`: Provide a text file with samples and loci to exclude from the analysis. Each row should contain the ID of a sample to be excluded. Names need to be identical to the IDs in `samples.csv`
 * `-f` or `--force`: Force overwrite the output folder if it already exists (default: cowardly refusing to overwrite).
+* `-i` or `--partition`: Use partition model for iqtree with combined dataset. :warning: may take very long :warning: (default: disabled)
 * `-k` or `--kthreshold`: Define the threshold *k* for the maximum allowed proportion of mismatches for primer alignment during demultiplexing (default: 0.05).
 * `-m` or `--minreads`: Set the minimum number of reads required for consensus sequence reconstruction (default: 100).
 * `-n` or `--nreads`: Provide the absolute number or percentage of top-quality reads to consider for consensus sequence generation and variant calling (default: 500).
 * `-q` or `--quality`: Specify the minimum PHRED quality score for read filtering (default: 10).
 * `-r` or `--sizerange`: Define the allowed size buffer in basepairs around the expected locus length (default: 100).
 * `-t` or `--threads`: Specify the number of threads to be used for parallel processing (default: 10).
-* `-i` or `--partition`: Use partition model for iqtree with combined dataset. :warning: may take very long :warning: (default: disabled)
+* `-w` or `--nowatermark`: Remove the watermark from the tree figures
+* `-y` or `--freqthreshold`: The minimum frequency of reads supporting a given consensus sequence retained for further analyses(default: 0.1).
+
 
 #### Example command
 

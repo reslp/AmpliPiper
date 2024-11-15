@@ -16,6 +16,7 @@ group = OptionGroup(parser, '< put description here >')
 
 parser.add_option("--input", dest="IN", help="Input file")
 parser.add_option("--path", dest="PA", help="Input file")
+parser.add_option("--FreqTH", dest="FT", help="Minimum Frequency threshold")
 parser.add_option("--output", dest="OUT", help="Output file")
 
 (options, args) = parser.parse_args()
@@ -94,6 +95,7 @@ TEST = {2:
 # dictionary to store the consensus IDs to keep for each locus and sample
 KEEP = d(lambda: d(list))
 PLOIDY = d(lambda: d(list))
+FreqTH = float(options.FT)
 output = open(options.IN.split(".csv")[0]+".likelihoods", "wt")
 output.write("ID,Locus,Reads,Alleles,Ploidy,Likelihood\n")
 for l in load_data(options.IN):
@@ -121,7 +123,7 @@ for l in load_data(options.IN):
     Keep = []
     for C in range(len(Reads)):
         RF = int(Reads[C])/GrandTotal
-        if RF < 0.1:
+        if RF < FreqTH:
             continue
         Keep.append(C)
     if len(Keep) == 1:

@@ -16,14 +16,16 @@ usage() {
     -e | --exclude: Provide a text file with samples and loci to exclude from the analyses. Each row contains one comma-separated sample-ID and locus-ID to be excluded.
     -f | --force: Force overwriting the previous ouput folder (default: Cowardly refusing to overwrite)
     -g | --outgroup: Define an outgroup sample or a comma,separated list of outgroup samples (need to match the IDs in --samples)
+    -i | --partition: Use partitionmodel for iqtree with combined dataset (default: disabled)
     -k | --kthreshold: Define the threshold k for the maximum allowed mismatches for the primer alignment during demultiplexing (default: 0.05)
     -m | --minreads: Set the minimum number of reads required for the reconstruction of consensus sequences; If there are not enough reads, the locus will be ignored (default: 100)
     -n | --nreads: Provide the absolute number or the percentage of top quality reads you want the pipeline to take into account for consensus sequences generation and variant calling (default is 500)
     -q | --quality: Provide an integer that represent the minimum quality which the reads will be filtered for (default is 10)
     -r | --sizerange: Define the allowed size buffer around the expected locus length as defined in the primers file (default: 100)
     -t | --threads: Number of threads the program will be using (default: 10)
-    -i | --partition: Use partitionmodel for iqtree with combined dataset (default: disabled)
- 
+    -w | --nowatermark: Remove the watermark from the tree figures
+    -y | --freqthreshold: The minimum frequency of reads supporting a given consensus sequence retained for further analyses(default: 0.1)
+
   
   Input HAPLOTYPES -h,--help to show the help message"
     exit 1
@@ -41,6 +43,7 @@ force="no"          # -f
 blast="no"          # -b
 partition="no"      # -i
 outgroup="no"       # -g
+freqthreshold=0.1   # -y
 
 os="$(uname -s)"
 
@@ -166,6 +169,10 @@ do
         ;;
     -t | --threads)
         threads="$2"
+        shift 2
+        ;;
+    -y | --freqthreshold)
+        freqthreshold="$2"
         shift 2
         ;;
     -w | --nowatermark)
@@ -471,6 +478,7 @@ ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/ChooseCons.py \
     --input ${output}/results/summary/summary.csv \
     --path ${output}/results/consensus_seqs \
     --output ${output}/results/haplotypes \
+    --FreqTH ${freqthreshold} \
     >>${output}/log/ampliconsorter/Summary.log 2>&1
 
 conda deactivate
