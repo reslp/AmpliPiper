@@ -115,7 +115,7 @@ CTYB,GATGCCTCAAGCCCTCCTA,AAGATTTCCACGAGCATACCTC,780
 * `-r` or `--sizerange`: Define the allowed size buffer in basepairs around the expected locus length (default: 100).
 * `-t` or `--threads`: Specify the number of threads to be used for parallel processing (default: 10).
 * `-w` or `--nowatermark`: Remove the watermark from the tree figures
-* `-y` or `--freqthreshold`: The minimum frequency of reads supporting a given consensus sequence retained for further analyses(default: 0.1).
+* `-y` or `--freqthreshold`: Retain consensus sequences for further analyses which are supported by a frequency of raw reads above this threshold (default: 0.1).
 
 
 #### Example command

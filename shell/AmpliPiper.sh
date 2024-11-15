@@ -24,7 +24,7 @@ usage() {
     -r | --sizerange: Define the allowed size buffer around the expected locus length as defined in the primers file (default: 100)
     -t | --threads: Number of threads the program will be using (default: 10)
     -w | --nowatermark: Remove the watermark from the tree figures
-    -y | --freqthreshold: The minimum frequency of reads supporting a given consensus sequence retained for further analyses(default: 0.1)
+    -y | --freqthreshold: Retain consensus sequences for further analyses which are supported by a frequency of raw reads above this threshold (default: 0.1)
 
   
   Input HAPLOTYPES -h,--help to show the help message"
