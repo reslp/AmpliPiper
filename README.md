@@ -27,7 +27,7 @@ AmpliPiper is a comprehensive workflow based on *BASH scripting*, *Python* and *
 
 ### Third party programs used in the pipeline
 
-* [`NanoFilt`](https://github.com/wdecoster/nanofilt) for read filtering
+* [`Chopper`](https://github.com/wdecoster/chopper) for read filtering
 * [`amplicon_sorter.py`](https://github.com/avierstr/amplicon_sorter) for consensus sequence reconstruction
 * [`bold_api.py`](https://v3.boldsystems.org/index.php/api_home) for species identification using the BOLD API
 * [`BLASTapi.py`](https://biopython.org/docs/dev/Tutorial/chapter_blast.html) BLAST with Bio.Python for species identification
@@ -150,7 +150,7 @@ If you want to test the pipeline on a test dataset, please check out the `testda
 > :warning: _From the 7th of November, since BOLD upgraded from v4 to v5, the API service is migrating and thus unavailable. We advise that you use, for now, BLAST and, if you do not wish to perform species identification, we suggest to change the name of the loci (for example, from `COX1` to `COI`)._
 
 1. **Demultiplexing**: The pipeline uses `demultiplex_fastq.py` to demultiplex the raw fastq files based (1) on correct alignment of the primer sequences at the terminal ends of a raw FASTQ file and (2) on the expected length of the amplicon .
-2. **Filtering**: The pipeline uses `NanoFilt` to remove low-quality reads based on a PHRED-scaled quality threshold.
+2. **Filtering**: The pipeline uses `Chopper` to remove low-quality reads based on a PHRED-scaled quality threshold.
 3. **Consensus Sequence Reconstruction**: The pipeline uses `amplicon_sorter.py` to reconstruct consensus sequences for each locus and sample.
 4. **Choice of Haplotypes**: The pipeline uses `ChooseConsensus.py` to estimate the expected ploidy and chooses consensus haplotypes reconstructed with amplicon_sorter that match in frequency with the expected ploidy based on maximum likelihood tests.
 5. **Species Identification**: The pipeline uses, as a default, `bold_api.py` to identify species based on the BOLD API using the consensus sequences either of **COX1**, **ITS** or **MATK_RBCL** amplicons. There is also the possibility to use BLAST API for the same loci, by setting the `--blast` flag: the two species identification services are mutually exclusive. 

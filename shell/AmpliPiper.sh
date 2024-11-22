@@ -348,16 +348,17 @@ while IFS=$"," read -r samplename file; do
     if [[ ${file} == "\*.gz$" ]]; then
         cp -n ${file} ${output}/data/raw/${samplename}.fastq.gz
     else
-        conda activate ${wd}/envs/nanofilt
+        conda activate ${wd}/envs/chopper
         pigz -c ${file} > ${output}/data/raw/${samplename}.fastq.gz
         conda deactivate
     fi
 
-    ## filter raw sequences with nanofilt
-    conda activate ${wd}/envs/nanofilt
+    ## filter raw sequences with chopper
+    conda activate ${wd}/envs/chopper
     pigz -dc ${output}/data/raw/${samplename}.fastq.gz |
-        NanoFilt -q ${quality} | pigz \
+        chopper -q ${quality} 2>> ${output}/log/demulti/${samplename}_demulti.log | pigz \
         >${output}/data/filtered/${samplename}-filt.fastq.gz
+        
     conda deactivate
 
     ## demultiplex per locus and sample
@@ -371,7 +372,7 @@ while IFS=$"," read -r samplename file; do
         -th ${kthres} \
         -sr ${sizerange} \
         -mr ${minreads} \
-        -rp ${nreads} > ${output}/log/demulti/${samplename}_demulti.log 2>&1
+        -rp ${nreads} >> ${output}/log/demulti/${samplename}_demulti.log 2>&1
     conda deactivate
 
     #echo '${samplename} finished'

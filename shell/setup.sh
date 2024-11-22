@@ -214,20 +214,20 @@ echo "MAFFT installation done"
 # fi
 # echo "Minimap installation done"
 
-## install NanoFilt
+## install Chopper
 mamba create \
-    -p ${BASEDIR}/envs/nanofilt \
+    -p ${BASEDIR}/envs/chopper \
     -y \
     -c bioconda \
     -c conda-forge \
-    nanofilt >>${BASEDIR}/envs/logs/setup.log 2>&1
+    chopper >>${BASEDIR}/envs/logs/setup.log 2>&1
 
-if [ ! -d ${BASEDIR}/envs/nanofilt ]; then
-    echo "Nanofilt installation failed" >>${BASEDIR}/envs/logs/setup.err
+if [ ! -d ${BASEDIR}/envs/chopper ]; then
+    echo "chopper installation failed" >>${BASEDIR}/envs/logs/setup.err
 fi
 
 conda activate \
-    ${BASEDIR}/envs/nanofilt
+    ${BASEDIR}/envs/chopper
 
 mamba install \
     -y \
@@ -236,7 +236,7 @@ mamba install \
     pigz >>${BASEDIR}/envs/logs/setup.log 2>&1
 
 conda deactivate
-echo "Nanofilt installation done"
+echo "chopper installation done"
 
 ## install Pigz
 mamba create \
