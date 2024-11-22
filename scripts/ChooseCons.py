@@ -1,50 +1,74 @@
 from optparse import OptionParser, OptionGroup
 import numpy as np
 from scipy.stats import multinomial
-from scipy.stats import chisquare
 from collections import defaultdict as d
 import os
+import gzip
+import sys
 
-# Author: Martin Kapun
+# Author: Martin Kapun (modified for robustness and additional functionality)
 
 #########################################################   HELP   #########################################################################
-usage = "python %prog --input file --output file "
+usage = "python %prog --input file --output file"
 parser = OptionParser(usage=usage)
-group = OptionGroup(parser, '< put description here >')
-
-#########################################################   CODE   #########################################################################
-
-parser.add_option("--input", dest="IN", help="Input file")
-parser.add_option("--path", dest="PA", help="Input file")
-parser.add_option("--FreqTH", dest="FT", help="Minimum Frequency threshold")
-parser.add_option("--output", dest="OUT", help="Output file")
+group = OptionGroup(parser, 'Description')
+group.add_option("--input", dest="IN",
+                 help="Input CSV file containing genomic data.")
+group.add_option("--path", dest="PA", help="Path to consensus sequence files.")
+group.add_option("--FreqTH", dest="FT",
+                 help="Minimum frequency threshold for filtering haplotypes.", default=0.0, type=float)
+group.add_option("--output", dest="OUT", help="Output directory for results.")
+parser.add_option_group(group)
 
 (options, args) = parser.parse_args()
-parser.add_option_group(group)
+
+#########################################################   FUNCTIONS   #########################################################################
 
 
 def load_data(x):
-    ''' import data either from a gzipped or or uncrompessed file or from STDIN'''
-    import gzip
+    """
+    Load data from a file or STDIN. Supports gzipped files.
+    Args:
+        x (str): Path to the file or '-' for STDIN.
+    Returns:
+        file object: File handle for reading.
+    """
     if x == "-":
-        y = sys.stdin
+        return sys.stdin
     elif x.endswith(".gz"):
-        y = gzip.open(x, "rt", encoding="latin-1")
+        return gzip.open(x, "rt", encoding="latin-1")
     else:
-        y = open(x, "r", encoding="latin-1")
-    return y
+        return open(x, "r", encoding="latin-1")
 
 
 def likelihood(observed, expected):
-    # Multinomial likelihood: multinomial.pmf(observed counts | expected proportions)
-    # print(observed, np.sum(observed), expected)
+    """
+    Calculate multinomial likelihood for observed counts given expected proportions.
+    Args:
+        observed (list): Observed allele counts.
+        expected (list): Expected allele proportions.
+    Returns:
+        float: Multinomial likelihood.
+    """
     return multinomial.pmf(observed, n=np.sum(observed), p=expected)
 
 
 def estimatePloidy(OBS, output, Locus, ID):
+    """
+    Estimate ploidy based on observed haplotype counts.
+    Args:
+        OBS (list): Observed haplotype counts.
+        output (file): File handle for writing likelihood data.
+        Locus (str): Locus identifier.
+        ID (str): Sample identifier.
+    Returns:
+        defaultdict: Ploidy likelihood results.
+    """
     PLO = d(lambda: d(list))
     OBS = [int(x) for x in OBS]
     COUNTl = len(OBS)
+    if COUNTl not in TEST:
+        return PLO  # Return empty if ploidy model is undefined
     for k, v in TEST[COUNTl].items():
         for EXP in v:
             EXP /= np.sum(EXP)
@@ -52,122 +76,102 @@ def estimatePloidy(OBS, output, Locus, ID):
             PLO[LH]["samples"] = sorted(OBS)
             PLO[LH]["PLOIDY"].append([str(COUNTl), str(k)])
             output.write(",".join(
-                [ID, Locus, "/".join([str(x) for x in OBS]), str(COUNTl), str(k), str(LH)])+"\n")
-    # OBSold = OBS
-    # while (len(OBS) >= 3):
-    #     Total = sum(OBS)
-    #     OBSold = sorted(OBSold)[1:]
-    #     OBS = sorted(OBS)[1:]
-    #     Freq = [x/sum(OBS) for x in OBS]
-    #     OBS = [round(x*Total, 0) for x in Freq]
-    #     COUNTl = len(OBS)
-
-    #     for k, v in TEST[COUNTl].items():
-    #         for EXP in v:
-    #             EXP /= np.sum(EXP)
-    #             LH = likelihood(sorted(OBS), EXP)
-    #             PLO[LH]["samples"].extend(OBSold)
-    #             PLO[LH]["PLOIDY"].append([str(COUNTl), str(k)])
-    #             output.write(",".join(
-    #                 [ID, Locus, "/".join([str(x) for x in OBS]), str(COUNTl), str(k), str(LH)])+"\n")
+                [ID, Locus, "/".join([str(x) for x in OBS]), str(COUNTl), str(k), str(LH)]) + "\n")
     return PLO
 
 
-TEST = {2:
-        {1: [np.array([0.0, 1.0])],
-         2: [np.array([1/2, 1/2])],
-         3: [np.array([1/3, 2/3])],
-         4: [np.array([1/2, 1/2]), np.array([1/4, 3/4])]},
-        3:
-        {1: [np.array([0.0, 0.0, 1.0])],
-         2: [np.array([0.0, 1/2, 1/2])],
-            3: [np.array([1/3, 1/3, 1/3])],
-            4: [np.array([1/4, 1/4, 1/2])]},
-        4: {1: [np.array([0.0, 0.0, 0.0, 1.0])],
-            2: [np.array([0.0, 0.0, 1/2, 1/2])],
-            3: [np.array([0, 1/3, 1/3, 1/3])],
-            4: [np.array([1/4, 1/4, 1/4, 1/4])]}}
+#########################################################   TEST MODELS   #########################################################################
+TEST = {
+    2: {1: [np.array([0.0, 1.0])],
+        2: [np.array([0.5, 0.5])],
+        3: [np.array([1/3, 2/3])],
+        4: [np.array([0.5, 0.5]), np.array([0.25, 0.75])]},
+    3: {1: [np.array([0.0, 0.0, 1.0])],
+        2: [np.array([0.0, 0.5, 0.5])],
+        3: [np.array([1/3, 1/3, 1/3])],
+        4: [np.array([0.25, 0.25, 0.5])]},
+    4: {1: [np.array([0.0, 0.0, 0.0, 1.0])],
+        2: [np.array([0.0, 0.0, 0.5, 0.5])],
+        3: [np.array([0.0, 1/3, 1/3, 1/3])],
+        4: [np.array([0.25, 0.25, 0.25, 0.25])]}
+}
 
+#########################################################   MAIN SCRIPT   #########################################################################
+FreqTH = float(options.FT)
+output = open(options.IN.split(".csv")[0] + ".likelihoods", "wt")
+output.write("ID,Locus,Reads,Alleles,Ploidy,Likelihood\n")
 
-# Perform chi-square goodness-of-fit test
-# chi2_stat, p_val = chisquare(observed, f_exp=expected)
-
-# dictionary to store the consensus IDs to keep for each locus and sample
 KEEP = d(lambda: d(list))
 PLOIDY = d(lambda: d(list))
-FreqTH = float(options.FT)
-output = open(options.IN.split(".csv")[0]+".likelihoods", "wt")
-output.write("ID,Locus,Reads,Alleles,Ploidy,Likelihood\n")
+
 for l in load_data(options.IN):
-    # skip header
     if l.startswith("ID,"):
-        continue
+        continue  # Skip header
+
     ID, Locus, HaplotypesCount, TotalReads, ReadCount, FrequencyOfTotal, HaplotypesLengths = l.rstrip().split(",")
-    # skip if NA
     if ReadCount == "NA":
         continue
-    # keep single haplotype if homozygous
+
     Reads = ReadCount.split("/")
-    READID = dict(zip(*[Reads, range(len(Reads))]))
-    if len(Reads) > 4:
-        Reads = sorted(Reads)[:4]
-    if len(Reads) == 1:
-        KEEP[Locus][ID].append(0)
-        PLOIDY[Locus][ID].append([1, 1])
-        continue
-    # calculate total reads across all consensus sequences
-    GrandTotal = 0
-    for C in Reads:
-        GrandTotal += int(C)
-    # calculate frequencies and remove consensus sequences with rel. Freq <10%
-    Keep = []
-    for C in range(len(Reads)):
-        RF = int(Reads[C])/GrandTotal
-        if RF < FreqTH:
-            continue
-        Keep.append(C)
+    READID = dict(zip(Reads, range(len(Reads))))
+
+    GrandTotal = sum(map(int, Reads))
+    Keep = [C for C in range(len(Reads)) if int(
+        Reads[C]) / GrandTotal >= FreqTH]
+
+    # Handle single allele case
     if len(Keep) == 1:
         KEEP[Locus][ID].append(Keep[0])
-        PLOIDY[Locus][ID].append([1, 1])
+        # Use "NA" to indicate no ploidy testing
+        PLOIDY[Locus][ID].append([1, "NA"])
         continue
 
+    # Skip ploidy testing if more than 4 haplotypes pass the threshold
+    if len(Keep) > 4:
+        for C in Keep:
+            KEEP[Locus][ID].append(C)
+        PLOIDY[Locus][ID].append([len(Keep), "NA"])
+        continue
+
+    # Estimate ploidy otherwise
     NEW = estimatePloidy([Reads[x] for x in Keep], output, Locus, ID)
-    BEST = max(NEW.keys())
+    BEST = max(NEW.keys(), default=None)
 
-    for sample in list(set(NEW[BEST]["samples"])):
-        KEEP[Locus][ID].append(READID[str(sample)])
-    for ploidy in NEW[BEST]["PLOIDY"]:
-        PLOIDY[Locus][ID].append(ploidy)
-# now print the ploidies for each locus+sample
-Out = open(options.IN+".ploidy", "wt")
+    if BEST is not None:
+        for sample in list(set(NEW[BEST]["samples"])):
+            KEEP[Locus][ID].append(READID[str(sample)])
+        for ploidy in NEW[BEST]["PLOIDY"]:
+            PLOIDY[Locus][ID].append(ploidy)
 
+# Write ploidy results
+Out = open(options.IN + ".ploidy", "wt")
 for l in load_data(options.IN):
-    # skip header
     if l.startswith("ID,"):
-        Out.write(l.rstrip()+",NoAlleles,ExpectedPloidy\n")
+        Out.write(l.rstrip() + ",NoAlleles,ExpectedPloidy\n")
         continue
+
     ID, Locus, HaplotypesCount, TotalReads, ReadCount, FrequencyOfTotal, HaplotypesLengths = l.rstrip().split(",")
-    # print(ReadCount)
     if ReadCount == "NA":
-        Out.write(l.rstrip()+",NA,NA\n")
+        Out.write(l.rstrip() + ",NA,NA\n")
         continue
+
     if ID in PLOIDY[Locus]:
         NoA, EP = list(zip(*PLOIDY[Locus][ID]))
-        Out.write(l.rstrip()+","+"/".join(list(set([str(x) for x in NoA]))) +
-                  ","+"/".join([str(x) for x in EP])+"\n")
+        Out.write(l.rstrip() + "," + "/".join(list(set([str(x) for x in NoA]))) + "," +
+                  "/".join([str(x) for x in EP]) + "\n")
     else:
-        Out.write(l.rstrip()+",NA,NA\n")
+        Out.write(l.rstrip() + ",NA,NA\n")
 
 Out.close()
 
-##
+# Write filtered FASTA files
 for Locus, v in KEEP.items():
-    directory = options.OUT+"/"+Locus+"/"
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-    Out = open(directory+Locus+".fasta", "wt")
+    directory = os.path.join(options.OUT, Locus)
+    os.makedirs(directory, exist_ok=True)
+    Out = open(os.path.join(directory, Locus + ".fasta"), "wt")
     for ID, v1 in v.items():
-        FILE = options.PA+"/"+ID+"/"+Locus+"/"+Locus+"_consensussequences.fasta"
+        FILE = os.path.join(options.PA, ID, Locus, Locus +
+                            "_consensussequences.fasta")
         FASTA = d(str)
         C = ""
         for l in load_data(FILE):
@@ -180,7 +184,7 @@ for Locus, v in KEEP.items():
             FASTA[C] += l
         C = 1
         for key in v1:
-            Out.write(">"+ID+"_"+str(C)+"\n")
+            Out.write(">" + ID + "_" + str(C) + "\n")
             Out.write(FASTA[key])
             C += 1
     Out.close()

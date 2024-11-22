@@ -1,7 +1,7 @@
-# load necessary R libraries
+# Load necessary R libraries
 library(ggtree)
 library(tidyverse)
-library(phytools) # to determine the maximum tree height and add midpoint root
+library(phytools) # For midpoint rooting and tree height calculation
 
 args <- commandArgs(trailingOnly = TRUE)
 
@@ -14,7 +14,7 @@ height <- as.numeric(args[6])
 outgroup <- args[7]
 watermark <- args[8]
 
-## load tree file and root midpoint
+# Load tree file and root midpoint
 tree <- read.tree(input)
 
 if (outgroup == "no") {
@@ -30,24 +30,25 @@ if (outgroup == "no") {
     tree <- midpoint.root(tree)
   }
 }
-## caluculate tree height (on x-axis)
+
+# Calculate tree height (x-axis range)
 Xmax <- max(nodeHeights(tree))
 
-## only retain Bootstrapping Support > 75%
+# Only retain bootstrapping support > 75%
 tree$node.label[as.numeric(tree$node.label) < 75] <- NA
 
+# Set parameters for tip labels
+tip_label_size <- 3 # Adjust size as needed
+tip_label_align <- TRUE # Align tip labels horizontally
+tip_label_linesize <- 0.5 # Line size between tips and labels
+
 if (watermark == "YES") {
-  ## plot tree
-  PLOT.tree <- ggtree(tree,
-    layout = "roundrect"
-  ) +
+  # Plot tree with watermark
+  PLOT.tree <- ggtree(tree, layout = "roundrect") +
     ggtitle(title) +
     theme_tree2() +
     theme_bw() +
-    ggplot2::xlim(
-      0,
-      Xmax + Xmax * offset
-    ) +
+    ggplot2::xlim(0, Xmax + Xmax * offset) +
     xlab("av. subst./site") +
     geom_nodelab(
       hjust = 1.25,
@@ -72,20 +73,18 @@ if (watermark == "YES") {
       axis.ticks.y = element_blank()
     ) +
     coord_cartesian(clip = "off") +
-    options(ragg.max_dim = 100000) +
-    geom_tiplab()
+    geom_tiplab(
+      align = tip_label_align,
+      size = tip_label_size,
+      linesize = tip_label_linesize
+    )
 } else {
-  ## plot tree
-  PLOT.tree <- ggtree(tree,
-    layout = "roundrect"
-  ) +
+  # Plot tree without watermark
+  PLOT.tree <- ggtree(tree, layout = "roundrect") +
     ggtitle(title) +
     theme_tree2() +
     theme_bw() +
-    ggplot2::xlim(
-      0,
-      Xmax + Xmax * offset
-    ) +
+    ggplot2::xlim(0, Xmax + Xmax * offset) +
     xlab("av. subst./site") +
     geom_nodelab(
       hjust = 1.25,
@@ -99,21 +98,27 @@ if (watermark == "YES") {
       axis.ticks.y = element_blank()
     ) +
     coord_cartesian(clip = "off") +
-    options(ragg.max_dim = 100000) +
-    geom_tiplab()
+    geom_tiplab(
+      align = tip_label_align,
+      size = tip_label_size,
+      linesize = tip_label_linesize
+    )
 }
+
+# Export tree to PNG and PDF
 PNG <- paste0(output, ".png")
 PDF <- paste0(output, ".pdf")
-## export tree
 ggsave(
   filename = PDF,
-  PLOT.tree,
+  plot = PLOT.tree,
   width = width,
-  height = height, limitsize = FALSE
+  height = height,
+  limitsize = FALSE
 )
 ggsave(
   filename = PNG,
-  PLOT.tree,
+  plot = PLOT.tree,
   width = width,
-  height = height, limitsize = FALSE
+  height = height,
+  limitsize = FALSE
 )

@@ -24,8 +24,8 @@ resultsdir = args.resultsfolder
 outdir = args.output
 loci = args.loci
 samples = args.samples
-loci.append('astraltree')
-parameters= args.parameters
+# loci.append('astraltree')
+parameters = args.parameters
 
 
 def get_png_files(base_path):
@@ -397,7 +397,7 @@ table {
 
 # dir="/media/inter/ssteindl/Amplicon/latest_HAPLOTYPES/HAPLOTYPES/lepidoptera_test_output/results"
 directories_in_dir = ["summary", "tree",
-                      "haplotypes", "SpeciesID", "SpeciesDelim", "astraltree"]
+                      "haplotypes", "SpeciesID", "SpeciesDelim"]
 
 # for dirc in directories_in_dir:
 #    full_path = os.path.join(dir, dirc)
@@ -415,11 +415,11 @@ htmlbutton_empty = """<li>
                 </div>
             </li> """
 
-#allparameters=f"""quality = {parameters.split(",")[0]}, 
-#similarconsensus= {parameters.split(",")[1]}, nreads= {parameters.split(",")[2]}, sizerange= {parameters.split(",")[3]},
-#minreads= {parameters.split(",")[4]}, threads= {parameters.split(",")[5]}, kthres= {parameters.split(",")[6]},
-#force= {parameters.split(",")[7]}, blast= {parameters.split(",")[8]}, partition= {parameters.split(",")[9]},
-#"""
+# allparameters=f"""quality = {parameters.split(",")[0]},
+# similarconsensus= {parameters.split(",")[1]}, nreads= {parameters.split(",")[2]}, sizerange= {parameters.split(",")[3]},
+# minreads= {parameters.split(",")[4]}, threads= {parameters.split(",")[5]}, kthres= {parameters.split(",")[6]},
+# force= {parameters.split(",")[7]}, blast= {parameters.split(",")[8]}, partition= {parameters.split(",")[9]},
+# """
 
 
 allparameters = f"""
@@ -793,7 +793,7 @@ def writehtml(dir, directories, mastercontent_main):
             ploidyContainer = ploidyContainerEmpty.format("", ploidy)
             mastercontent_main += ploidyContainer
             for analysisname, filename in {'SummaryHaplotypes': 'summary/summary.csv.png', 'SummaryPrimers': 'summary/primers/primers_dist.png', 'SummaryPloidy': 'summary/summary.csv_ExpectedPloidy.png'}.items():
-                gridc = gridcontainer.format(analysisname,"", filename)
+                gridc = gridcontainer.format(analysisname, "", filename)
                 mastercontent_main += gridc
                 mastercontent_main += """</div>"""
             # gridc=gridcontainer.format(analyis_el, filepath)
@@ -805,7 +805,7 @@ def writehtml(dir, directories, mastercontent_main):
             # print(htmlbutton)
             # link_inner = "" #old position of "link_inner"
             link_inner_inner = ""
-            astraltreepath = os.path.join(dir, "astraltree")
+            # astraltreepath = os.path.join(dir, "astraltree")
             for elem in list_directories(path):
                 # print("ELEM IN LOCI! PATH IS:", path, elem)
                 new_path = os.path.join(path, elem)
@@ -819,21 +819,23 @@ def writehtml(dir, directories, mastercontent_main):
                 # showgridTree here
                         # piclink = showGridLink.format(analyis_el,elem)
                         # allinks += piclink
-                        gridc = gridcontainer2.format(analyis_el, elem, filepath)
+                        gridc = gridcontainer2.format(
+                            analyis_el, elem, filepath)
                 mastercontent_main += gridc
                 link_inner_inner += showGridLink.format(analyis_el, elem)
                 mastercontent_main += """</div>"""
-            for file in os.listdir(astraltreepath):
-                if file.lower().endswith('.html') or file.lower().endswith('.png'):
-                    filepath = os.path.join(
-                        astraltreepath, file).replace((dir+"/"), "")
-                    gridc = gridcontainer2.format('astraltree', "ASTRAL", filepath)
-                    mastercontent_main += gridc
-                    mastercontent_main += """</div>"""
-                    link_inner_inner += showGridLink.format(
-                        'astraltree', 'ASTRAL Tree')
-                else:
-                    continue
+            # for file in os.listdir(astraltreepath):
+            #     if file.lower().endswith('.html') or file.lower().endswith('.png'):
+            #         filepath = os.path.join(
+            #             astraltreepath, file).replace((dir+"/"), "")
+            #         gridc = gridcontainer2.format(
+            #             'astraltree', "ASTRAL", filepath)
+            #         mastercontent_main += gridc
+            #         mastercontent_main += """</div>"""
+            #         link_inner_inner += showGridLink.format(
+            #             'astraltree', 'ASTRAL Tree')
+            #     else:
+            #         continue
     # print(link_inner_inner)
             RES1 = htmlbutton.format(link_inner_inner)
             mastercontent += RES1
@@ -861,13 +863,14 @@ def writehtml(dir, directories, mastercontent_main):
                         filepath = os.path.join(
                             new_path, file).replace((dir+"/"), "")
                         # print(filepath)
-                        ##insert heading here
-                        gridc = gridcontainer.format(analyis_el, elem, filepath)
-                        #gridc = gridcontainer.format(analyis_el, filepath)
+                        # insert heading here
+                        gridc = gridcontainer.format(
+                            analyis_el, elem, filepath)
+                        # gridc = gridcontainer.format(analyis_el, filepath)
                     else:
                         continue
                 mastercontent_main += gridc
-                #mastercontent_main += """ <p style="padding-left: 1ch;">"""+elem+"""</p></div>"""
+                # mastercontent_main += """ <p style="padding-left: 1ch;">"""+elem+"""</p></div>"""
                 mastercontent_main += """</div>"""
             RES2 = htmlbutton.format(allinks)
             mastercontent += RES2

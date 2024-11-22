@@ -319,12 +319,14 @@ conda activate ${wd}/envs/python_dependencies
 ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/CompPrimers.py \
     -p ${primers} \
     -o ${output}/results/summary/primers/primers_dist.csv \
-    -hr \
-    -mp >${output}/results/summary/min_edit.dist 2>${output}/log/summary/primerdist.log
+    >${output}/results/summary/min_edit.dist 2>${output}/log/summary/primerdist.log
 
 conda deactivate
 
 echo "finished"
+
+## count number of loci in primers file:
+LOCI=$(awk '!/^ID,/' ${primers} | wc -l)
 
 ## loop through all input files in raw data folder and store filtered files in new folder
 echo "***** Copying files, starting filtering and demultiplexing by locus *****"
@@ -615,17 +617,21 @@ for locus in COX1 ITS MATK_RBCL; do
     fi
 done
 
-## Species delineation with ASAP for all concatenated Haplotypes
-echo "***** concatenate all loci *****"
+if [[ ${LOCI} > 1 && $(ls -l ${output}/results/haplotypes/*/*_aln.fasta | wc -l) > 1 ]]; then
 
-conda activate ${wd}/envs/asap
-mkdir -p ${output}/results/haplotypes/Combined
+    ## Species delineation with ASAP for all concatenated Haplotypes
+    echo "***** concatenate all loci *****"
 
-${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/MergeAln.py \
-    --input "${output}/results/haplotypes/*/*_aln.fasta" \
-    --output ${output}/results/haplotypes/Combined/Combined
+    conda activate ${wd}/envs/asap
+    mkdir -p ${output}/results/haplotypes/Combined
 
-conda deactivate
+    ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/MergeAln.py \
+        --input "${output}/results/haplotypes/*/*_aln.fasta" \
+        --output ${output}/results/haplotypes/Combined/Combined
+
+    conda deactivate
+    echo "finished"
+fi
 
 ## reconstruct trees if > 3 haplotypes in input
 echo "***** reconstruct ML trees per locus *****"
@@ -824,65 +830,67 @@ then
 
 fi
 
-## now do ASTRAL concatenated trees
-mkdir ${output}/results/astraltree/
+if [[ ${LOCI} > 1 ]]; then
+    ## now do ASTRAL concatenated trees
+    mkdir -p ${output}/results/tree/ASTRAL
 
-## concatenate trees
-cat ${output}/results/tree/*/*.treefile >${output}/results/astraltree/input.tree
+    ## concatenate trees
+    cat ${output}/results/tree/*/*.treefile >${output}/results/astral_input.tree
+    mv ${output}/results/astral_input.tree ${output}/results/tree/ASTRAL
 
-## test if ANY trees available in file
-if [[ ! -z $(grep '[^[:space:]]' ${output}/results/astraltree/input.tree) ]]; then
+    ## test if ANY trees available in file
+    if [[ ! -z $(grep '[^[:space:]]' ${output}/results/tree/ASTRAL/astral_input.tree) ]]; then
 
-    echo "***** reconstruct ASTRAL tree across all loci *****"
+        echo "***** reconstruct ASTRAL tree across all loci *****"
 
-    if
-        [[ $(($(cat ${samples} | wc -l) / 3)) -gt 8 ]] \
-            ;
-    then
-        HEIGHT= $(($(cat ${samples} | wc -l) / 3))
-    else
-        HEIGHT=8
+        if
+            [[ $(($(cat ${samples} | wc -l) / 3)) -gt 8 ]] \
+                ;
+        then
+            HEIGHT= $(($(cat ${samples} | wc -l) / 3))
+        else
+            HEIGHT=8
+        fi
+
+        if
+            [[ ! -z ${ID} ]] \
+                ;
+        then
+            OFFSET=0.7
+        else
+            OFFSET=0.3
+        fi
+
+        ## reconstruct astral consensus tree
+        conda activate ${wd}/envs/astral
+
+        astral \
+            -i ${output}/results/tree/ASTRAL/astral_input.tree \
+            -o ${output}/results/tree/ASTRAL/ASTRAL.tree \
+            >>${output}/log/tree/Astral.log 2>&1
+
+        conda deactivate
+
+        conda activate ${wd}/envs/R
+
+        ## plot tree
+        ${wd}/envs/R/bin/Rscript ${wd}/scripts/PlotTree_astral.r \
+            ${output}/results/tree/ASTRAL/ASTRAL.tree \
+            ${output}/results/tree/ASTRAL/ASTRAL \
+            ASTRAL \
+            ${OFFSET} \
+            8 \
+            ${HEIGHT} \
+            ${outgroupNew} \
+            ${WM} \
+            >>${output}/log/tree/Astral.log 2>&1
+
+        conda deactivate
+
+        echo "finished"
+
     fi
-
-    if
-        [[ ! -z ${ID} ]] \
-            ;
-    then
-        OFFSET=0.7
-    else
-        OFFSET=0.3
-    fi
-
-    ## reconstruct astral consensus tree
-    conda activate ${wd}/envs/astral
-
-    astral \
-        -i ${output}/results/astraltree/input.tree \
-        -o ${output}/results/astraltree/ASTRAL.tree \
-        >>${output}/log/tree/Astral.log 2>&1
-
-    conda deactivate
-
-    conda activate ${wd}/envs/R
-
-    ## plot tree
-    ${wd}/envs/R/bin/Rscript ${wd}/scripts/PlotTree_astral.r \
-        ${output}/results/astraltree/ASTRAL.tree \
-        ${output}/results/astraltree/ASTRAL \
-        ASTRAL \
-        ${OFFSET} \
-        8 \
-        ${HEIGHT} \
-        ${outgroupNew} \
-        ${WM} \
-        >>${output}/log/tree/Astral.log 2>&1
-
-    conda deactivate
-
-    echo "finished"
-
 fi
-
 ## Species delineation with ASAP
 mkdir ${output}/log/SpecDelim
 
@@ -935,8 +943,7 @@ then
         >>${output}/log/SpecDelim/Combined_SD.log 2>&1
     #fi
     conda deactivate
-else
-    echo "Combined dataset empty, continue..."
+
 fi
 conda deactivate
 
