@@ -71,7 +71,7 @@ def plot_heatmap(matrix, labels, output_file):
     custom_colors = ["#7ac1dc", "#ff8e3e"]
     cmap = LinearSegmentedColormap.from_list("custom_palette", custom_colors)
 
-    fig, ax = plt.subplots(figsize=(8, 8))
+    fig, ax = plt.subplots(figsize=(10, 8))
     im = ax.imshow(flipped_matrix, cmap=cmap, aspect="auto")
 
     # Add labels and flip the x-axis
@@ -83,7 +83,7 @@ def plot_heatmap(matrix, labels, output_file):
     cbar = ax.figure.colorbar(im, ax=ax, label="Normalized Edit Distance")
 
     plt.tight_layout()
-    plt.savefig(output_file, dpi=300)
+    plt.savefig(output_file, dpi=200)
 
     return flipped_matrix
 

@@ -23,7 +23,10 @@ for l in load_data(options.names):
     if l.startswith("SAMPLE"):
         continue
     a = l.rstrip().rstrip(",").split(",")
-    ID = "_".join(a[0].split("_")[:-1])
+    if "Fq_" in a[0].split("_")[-1]:
+        ID = "_".join(a[0].split("_")[:-2])
+    else:
+        ID = "_".join(a[0].split("_")[:-1])
     # ID = a[0]
     if len(a) == 1:
         NAME[ID].append("NA")

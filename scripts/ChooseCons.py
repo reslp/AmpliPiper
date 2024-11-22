@@ -96,6 +96,24 @@ TEST = {
         4: [np.array([0.25, 0.25, 0.25, 0.25])]}
 }
 
+# TEST = {
+#     2: {2: [np.array([0.5, 0.5])],
+#         3: [np.array([1/3, 2/3])],
+#         4: [np.array([0.5, 0.5]), np.array([0.25, 0.75])],
+#         5: [np.array([1/5, 4/5]), np.array([2/5, 3/5])],
+#         6: [np.array([1/6, 5/6]), np.array([2/6, 4/6]), np.array([3/6, 3/6])]},
+#     3: {3: [np.array([1/3, 1/3, 1/3])],
+#         4: [np.array([0.25, 0.25, 0.5])],
+#         5: [np.array([1/5, 1/5, 3/5]), np.array([1/5, 2/5, 2/5])],
+#         6: [np.array([1/6, 1/6, 4/6]), np.array([1/6, 2/6, 3/6])]},
+#     4: {4: [np.array([0.25, 0.25, 0.25, 0.25])],
+#         5: [np.array([1/5, 1/5, 1/5, 2/5])],
+#         6: [np.array([1/6, 1/6, 1/6, 3/6]), np.array([1/6, 1/6, 2/6, 2/6])]},
+#     5: {5: [np.array([1/5, 1/5, 1/5, 1/5, 1/5])],
+#         6: [np.array([1/6, 1/6, 1/6, 1/6, 2/6])]},
+#     6: {6: [np.array([1/6, 1/6, 1/6, 1/6, 1/6, 1/6])]}
+# }
+
 #########################################################   MAIN SCRIPT   #########################################################################
 FreqTH = float(options.FT)
 output = open(options.IN.split(".csv")[0] + ".likelihoods", "wt")
@@ -103,7 +121,7 @@ output.write("ID,Locus,Reads,Alleles,Ploidy,Likelihood\n")
 
 KEEP = d(lambda: d(list))
 PLOIDY = d(lambda: d(list))
-
+FREQ = d(lambda: d(list))
 for l in load_data(options.IN):
     if l.startswith("ID,"):
         continue  # Skip header
@@ -116,20 +134,26 @@ for l in load_data(options.IN):
     READID = dict(zip(Reads, range(len(Reads))))
 
     GrandTotal = sum(map(int, Reads))
-    Keep = [C for C in range(len(Reads)) if int(
-        Reads[C]) / GrandTotal >= FreqTH]
+    Keep = []
+    NewTotal = 0
+    for C in range(len(Reads)):
+        if int(Reads[C]) / GrandTotal >= FreqTH:
+            Keep.append(C)
+            NewTotal += int(Reads[C])
 
     # Handle single allele case
     if len(Keep) == 1:
         KEEP[Locus][ID].append(Keep[0])
         # Use "NA" to indicate no ploidy testing
-        PLOIDY[Locus][ID].append([1, "NA"])
+        PLOIDY[Locus][ID].append([1, 1])
+        FREQ[Locus][ID].append(1)
         continue
 
     # Skip ploidy testing if more than 4 haplotypes pass the threshold
     if len(Keep) > 4:
         for C in Keep:
             KEEP[Locus][ID].append(C)
+            FREQ[Locus][ID].append(int(Reads[C]) / NewTotal)
         PLOIDY[Locus][ID].append([len(Keep), "NA"])
         continue
 
@@ -140,6 +164,7 @@ for l in load_data(options.IN):
     if BEST is not None:
         for sample in list(set(NEW[BEST]["samples"])):
             KEEP[Locus][ID].append(READID[str(sample)])
+            FREQ[Locus][ID].append(int(Reads[READID[str(sample)]]) / NewTotal)
         for ploidy in NEW[BEST]["PLOIDY"]:
             PLOIDY[Locus][ID].append(ploidy)
 
@@ -184,7 +209,11 @@ for Locus, v in KEEP.items():
             FASTA[C] += l
         C = 1
         for key in v1:
-            Out.write(">" + ID + "_" + str(C) + "\n")
+            if FreqTH == 0:
+                Out.write(">" + ID + "_" + str(C) + "_Fq:" +
+                          str(round(FREQ[Locus][ID][key], 2))+"\n")
+            else:
+                Out.write(">" + ID + "_" + str(C) + "\n")
             Out.write(FASTA[key])
             C += 1
     Out.close()
