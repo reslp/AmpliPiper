@@ -1,0 +1,9 @@
+.env
+.gitignore
+.old/
+docker/
+testdata/
+tutorial/
+compose.yaml
+compose.sh
+Docker_README.md

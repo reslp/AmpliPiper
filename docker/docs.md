@@ -4,12 +4,12 @@ The right context to build AmpliPiper Docker image can be found [here](https://g
 
 ## Dockerfile
 
-Based on [`conda/miniconda3`](https://hub.docker.com/r/conda/miniconda3/) and on [`mambaorg/micromamba`](https://hub.docker.com/r/mambaorg/micromamba) Docker images, the Dockerfile includes a:
+Based on [`condaforge/miniforge3`](https://hub.docker.com/r/mambaorg/micromamba) Docker image, the Dockerfile includes a:
 
-- Multi-staged build: `mambaorg/micromamba` is mounted as `mambabase` and `micromamba` is copied from there into `/usr/bin` of our base image (`conda/miniconda3`)
+- Single-stage build from the aforementioned image
 - Working directory is set as `/app/`
 - Context transferring from local filesystem to Docker image
-- Execution of the setup script, which has been modified to match with `micromamba` availability instead of `mamba` (find it at [`setup.docker.sh`](./setup.docker.sh))
+- Execution of the setup script (find it at [`shell/setup.sh`](./shell/setup.sh))
 
 ## CI/CD
 

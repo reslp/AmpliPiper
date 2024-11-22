@@ -1,9 +1,9 @@
 <div align="center">
-   <img src="https://img.shields.io/badge/Language-Bash-Green" alt="Static Badge">
-   <img src="https://img.shields.io/badge/Production_status-Beta-green" alt="Static Badge">
+   <img alt="GitHub top language" src="https://img.shields.io/github/languages/top/nhmvienna/AmpliPiper">
+   <img src="https://github.com/nhmvienna/AmpliPiper/actions/workflows/docker-publish.yml/badge.svg" alt="Docker">
    <img src="https://img.shields.io/badge/Release-v0.2.0_beta-purple" alt="Static Badge">
    <img src="https://img.shields.io/badge/Requires-Mamba_and_Conda-red" alt="Static Badge">
-   <img src="https://img.shields.io/badge/Supported_platforms-linux-brown" alt="Static Badge">
+   <img src="https://img.shields.io/badge/Supported_platforms-linux/macOS-brown" alt="Static Badge">
    <!-- <div>
         <a href="https://astrabert.github.io/AmpliPiper-docs/"><img src="./imgs/amplicon-piper.gif" alt="Example chat" align="center"></a>
    </div> -->

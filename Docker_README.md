@@ -201,4 +201,4 @@ bash /app/shell/AmpliPiper.sh \
     --force
 ```
 
-You can find these instructions in [run.sh](./run.sh).
+You can find these instructions in [run.sh](./docker/run.sh).

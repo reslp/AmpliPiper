@@ -95,7 +95,7 @@ mamba install \
     -y \
     -c conda-forge \
     -c bioconda \
-    matplotlib biopython edlib cairosvg pymsaviz ete3 beautifulsoup4 scipy scikit-learn >>${BASEDIR}/envs/logs/setup.log 2>&1
+    matplotlib biopython=1.84 edlib=1.2.3 cairosvg=2.3.0 pymsaviz ete3 beautifulsoup4 scipy scikit-learn >>${BASEDIR}/envs/logs/setup.log 2>&1
 
 ${BASEDIR}/envs/python_dependencies/bin/pip3 install --no-cache-dir numpy pandas >>${BASEDIR}/envs/logs/setup.log 2>&1
 echo "Python dependencies installation done"
@@ -141,18 +141,6 @@ if [ ! -d ${BASEDIR}/envs/astral ]; then
 fi
 echo "Astral installation done"
 
-## install BLAST
-mamba create \
-    -p ${BASEDIR}/envs/blast \
-    -y \
-    -c bioconda \
-    blast >>${BASEDIR}/envs/logs/setup.log 2>&1
-
-if [ ! -d ${BASEDIR}/envs/blast ]; then
-    echo "BLAST installation failed" >>${BASEDIR}/envs/logs/setup.err
-fi
-echo "BLAST installation done"
-
 ## install GNU parallel
 mamba create \
     -p ${BASEDIR}/envs/parallel \
@@ -171,7 +159,7 @@ mamba create \
     -y \
     -c bioconda \
     -c conda-forge \
-    iqtree=2.2.5 >>${BASEDIR}/envs/logs/setup.log 2>&1
+    iqtree=2.3.6 >>${BASEDIR}/envs/logs/setup.log 2>&1
 
 if [ ! -d ${BASEDIR}/envs/iqtree ]; then
     echo "IQtree installation failed" >>${BASEDIR}/envs/logs/setup.err
@@ -184,35 +172,12 @@ mamba create \
     -y \
     -c bioconda \
     -c conda-forge \
-    mafft=7.520 >>${BASEDIR}/envs/logs/setup.log 2>&1
+    mafft=7.525 >>${BASEDIR}/envs/logs/setup.log 2>&1
 
 if [ ! -d ${BASEDIR}/envs/mafft ]; then
     echo "MAFFT installation failed" >>${BASEDIR}/envs/logs/setup.err
 fi
 echo "MAFFT installation done"
-
-# ## install minimap
-# mamba create \
-#     -p ${BASEDIR}/envs/minimap \
-#     -y \
-#     -c conda-forge \
-#     -c bioconda \
-#     minimap2=2.26 >>${BASEDIR}/envs/logs/setup.log 2>&1
-
-# conda activate \
-#     ${BASEDIR}/envs/minimap
-
-# mamba install \
-#     -y \
-#     -c conda-forge \
-#     -c bioconda \
-#     samtools=1.17 >>${BASEDIR}/envs/logs/setup.log 2>&1
-
-# conda deactivate
-# if [ ! -d ${BASEDIR}/envs/minimap ]; then
-#     echo "Minimap installation failed" >>${BASEDIR}/envs/logs/setup.err
-# fi
-# echo "Minimap installation done"
 
 ## install Chopper
 mamba create \
@@ -251,21 +216,6 @@ if [ ! -d ${BASEDIR}/envs/pigz ]; then
 fi
 echo "PIGZ installation done"
 
-### install python_dependencies
-#mamba create \
-#    -p ${BASEDIR}/envs/python_dependencies \
-#    -y \
-#    -c conda-forge \
-#    -c bioconda \
-#    python=3.10 >>${BASEDIR}/envs/logs/setup.log 2>&1
-#
-## activate python_dependencies environments
-#
-#conda activate \
-#    ${BASEDIR}/envs/python_dependencies
-#
-# install dependencies
-
 ## install R
 mamba create \
     -p ${BASEDIR}/envs/R \
@@ -290,7 +240,7 @@ mamba install \
     bioconductor-ggtree \
     r-tidyverse \
     bioconductor-treeio \
-    r-phytools \
+    r-phytools=0.6_60 \
     r-ape \
     r-treedist \
     r-reshape2 \
@@ -302,61 +252,3 @@ mamba install \
 conda deactivate
 
 echo "R installation done"
-
-# ## install samtools
-# mamba create \
-#     -p ${BASEDIR}/envs/samtools \
-#     -y \
-#     -c conda-forge \
-#     -c bioconda \
-#     samtools=1.17 >>${BASEDIR}/envs/logs/setup.log 2>&1
-
-# if [ ! -d ${BASEDIR}/envs/samtools ]; then
-#     echo "Samtools installation failed" >>${BASEDIR}/envs/logs/setup.err
-# fi
-# echo "Samtools installation done"
-
-# echo ""
-# echo "*********************"
-# echo "Done"
-
-# ## install bcftools
-# mamba create \
-#     -p ${BASEDIR}/envs/bcftools \
-#     -y \
-#     -c conda-forge \
-#     -c bioconda \
-#     bcftools >>${BASEDIR}/envs/logs/setup.log 2>&1
-
-# if [ ! -d ${BASEDIR}/envs/bcftools ]; then
-#     echo "BCFtools installation failed" >>${BASEDIR}/envs/logs/setup.err
-# fi
-# echo "BCFtools installation done"
-
-# ${BASEDIR}/envs/python_dependencies/bin/pip3 install \
-#     edlib biopython matplotlib setuptools wheel requests pandas cffi jinja2 >> ${BASEDIR}/envs/logs/setup.log 2>&1
-
-## install BOLD_identification
-# mamba create \
-#     -p ${BASEDIR}/envs/bold_identification \
-#     -y \
-#     -c bioconda \
-#     bold-identification=0.0.27-0 >>${BASEDIR}/envs/logs/setup.log 2>&1
-
-# if [ ! -d ${BASEDIR}/envs/bold_identification ]; then
-#     echo "BOLD_identification installation failed" >>${BASEDIR}/envs/logs/setup.err
-# fi
-# echo "BOLD_identification installation done"
-
-# ## install NanoCaller
-# mamba create \
-#     -p ${BASEDIR}/envs/nanocaller \
-#     -y \
-#     -c bioconda \
-#     -c conda-forge \
-#     nanocaller >>${BASEDIR}/envs/logs/setup.log 2>&1
-
-# if [ ! -d ${BASEDIR}/envs/nanocaller ]; then
-#     echo "NanoCaller installation failed" >>${BASEDIR}/envs/logs/setup.err
-# fi
-# echo "NanoCaller installation done"
