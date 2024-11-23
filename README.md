@@ -91,7 +91,7 @@ ITS,CAAGCCCTCCTAGTGCTCAA,AAGATTTCCACGAGCATACCTC,780
 MATK_RBCL,GGATGATGTCTCAAGCCCTTC,TTTTCACGAGCATACCTCAATG,780
 CTYB,GATGCCTCAAGCCCTCCTA,AAGATTTCCACGAGCATACCTC,780
 ``` 
-> :warning: The Species identificion with BOLD only works for amplicons of (1) Cytochrome c oxidase subunit I (**COX1**), (2) Internal transcribed spacer (**ITS**) or (3) maturase K and/or ribulose 1,5-biphosphate carboxylase (**MATK_RBCL**). Make sure that the locus IDs in the primer files match exactly the locus names **COX1**, **ITS** or **MATK_RBCL** for the corresponding locus in your dataset. :warning:
+> :warning: The species identificion with BOLD and BLAST currently only works for amplicons of (1) Cytochrome c oxidase subunit I (**COX1**), (2) Internal transcribed spacer (**ITS**) or (3) maturase K and/or ribulose 1,5-biphosphate carboxylase (**MATK_RBCL**). Make sure that the locus IDs in the primer files match exactly the locus names **COX1**, **ITS** or **MATK_RBCL** for the corresponding locus in your dataset. :warning:
 
 
 ### Run the pipeline
@@ -147,7 +147,7 @@ If you want to test the pipeline on a test dataset, please check out the `testda
 
 #### Analysis steps
 
-> :warning: _From the 7th of November, since BOLD upgraded from v4 to v5, the API service is migrating and thus unavailable. We advise that you use, for now, BLAST and, if you do not wish to perform species identification, we suggest to change the name of the loci (for example, from `COX1` to `COI`)._
+> :warning: _From the 7th of November, since BOLD upgraded from v4 to v5, the API service is migrating and thus unavailable. We advise that you use, for now, BLAST and, if you do not wish to perform species identification, we suggest to change the name of the loci (for example, from `COX1` to `nCOX`)._
 
 1. **Demultiplexing**: The pipeline uses `demultiplex_fastq.py` to demultiplex the raw fastq files based (1) on correct alignment of the primer sequences at the terminal ends of a raw FASTQ file and (2) on the expected length of the amplicon .
 2. **Filtering**: The pipeline uses `Chopper` to remove low-quality reads based on a PHRED-scaled quality threshold.
