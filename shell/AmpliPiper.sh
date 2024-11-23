@@ -617,7 +617,7 @@ for locus in COX1 ITS MATK_RBCL; do
     fi
 done
 
-if [[ ${LOCI} > 1 && $(ls -l ${output}/results/haplotypes/*/*_aln.fasta | wc -l) > 1 ]]; then
+if [[ ${LOCI} -gt 1 && $(ls -l ${output}/results/haplotypes/*/*_aln.fasta | wc -l) -gt 1 ]]; then
 
     ## Species delineation with ASAP for all concatenated Haplotypes
     echo "***** concatenate all loci *****"
@@ -830,7 +830,7 @@ then
 
 fi
 
-if [[ ${LOCI} > 1 ]]; then
+if [[ ${LOCI} -gt 1 ]]; then
     ## now do ASTRAL concatenated trees
     mkdir -p ${output}/results/tree/ASTRAL
 

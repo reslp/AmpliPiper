@@ -20,7 +20,7 @@ read_and_plot <- function(file_path, max_dist) {
             alignment <- read.alignment(file_path, format = "fasta")
 
             # Calculate genetic distances
-            distances <- dist.alignment(alignment)
+            distances <- dist.alignment(alignment)**2
 
             # Convert distances to a distance matrix
             distance_matrix <- as.matrix(distances)
