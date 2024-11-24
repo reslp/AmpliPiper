@@ -141,6 +141,19 @@ if [ ! -d ${BASEDIR}/envs/astral ]; then
 fi
 echo "Astral installation done"
 
+## install ASTER
+mamba create \
+    -p ${BASEDIR}/envs/aster \
+    -y \
+    -c bioconda \
+    -c conda-forge \
+    aster >>${BASEDIR}/envs/logs/setup.log 2>&1
+
+if [ ! -d ${BASEDIR}/envs/aster ]; then
+    echo "ASTER installation failed" >>${BASEDIR}/envs/logs/setup.err
+fi
+echo "ASTER installation done"
+
 ## install GNU parallel
 mamba create \
     -p ${BASEDIR}/envs/parallel \

@@ -147,7 +147,7 @@ If you want to test the pipeline on a test dataset, please check out the `testda
 
 #### Analysis steps
 
-> :warning: _From the 7th of November, since BOLD upgraded from v4 to v5, the API service is migrating and thus unavailable. We advise that you use, for now, BLAST and, if you do not wish to perform species identification, we suggest to change the name of the loci (for example, from `COX1` to `nCOX`)._
+> :warning: _From the 7th of November, since BOLD upgraded from v4 to v5, the API service is migrating and thus unavailable. We advise that you use, for now, BLAST and, if you do not wish to perform species identification, we suggest to change the name of the loci (for example, from `COX1` to `nCOX1`)._
 
 1. **Demultiplexing**: The pipeline uses `demultiplex_fastq.py` to demultiplex the raw fastq files based (1) on correct alignment of the primer sequences at the terminal ends of a raw FASTQ file and (2) on the expected length of the amplicon .
 2. **Filtering**: The pipeline uses `Chopper` to remove low-quality reads based on a PHRED-scaled quality threshold.

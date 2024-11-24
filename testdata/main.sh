@@ -31,11 +31,12 @@ bash ${WD}/shell/AmpliPiper.sh \
     --output ${WD}/testdata/results/demo \
     --quality 10 \
     --nreads 1000 \
-    --blast your@email.com \
+    --blast capoony@gmail.com \
     --similar_consensus 97 \
     --threads 200 \
     --kthreshold 0.05 \
     --minreads 50 \
     --sizerange 100 \
     --outgroup He_mor_41 \
+    -y 0 \
     --force
