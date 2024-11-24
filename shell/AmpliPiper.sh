@@ -12,7 +12,7 @@ usage() {
     
     OPTIONAL ARGUMENTS:
     -b | --blast: Use BLAST instead of BOLD for species identification by setting this parameter and by providing an email address for using NCBI Entrez (default: disabled)
-    -c | --similar_consensus: Enable BLAST search for species identification; CAUTION! this may take VERY long (default: 96)
+    -c | --similar_consensus: Change the minimum similarity threshold (in percent) of amplicon_sorter. If the similarity of two clusters are smaller or equal to the threshold, they are considered separartely otherwise they are collapsed prior to consensus reconstruction (default: 96)
     -e | --exclude: Provide a text file with samples and loci to exclude from the analyses. Each row contains one comma-separated sample-ID and locus-ID to be excluded.
     -f | --force: Force overwriting the previous ouput folder (default: Cowardly refusing to overwrite)
     -g | --outgroup: Define an outgroup sample or a comma,separated list of outgroup samples (need to match the IDs in --samples)
@@ -617,7 +617,7 @@ for locus in COX1 ITS MATK_RBCL; do
     fi
 done
 
-if [[ ${LOCI} -gt 1 && $(ls -l ${output}/results/haplotypes/*/*_aln.fasta | wc -l) -gt 1 && ${freqthreshold} -gt 0 ]]; then
+if [[ ${LOCI} -gt 1 && $(ls -l ${output}/results/haplotypes/*/*_aln.fasta | wc -l) -gt 1 && ${freqthreshold} != "0" && ${freqthreshold} != "0.0" && ${freqthreshold} != "0.00" ]]; then
 
     ## Species delineation with ASAP for all concatenated Haplotypes
     echo "***** concatenate all loci *****"
@@ -836,7 +836,7 @@ then
 
 fi
 
-if [[ ${LOCI} -gt 1 && ${freqthreshold} -gt 0 ]]; then
+if [[ ${LOCI} -gt 1 && ${freqthreshold} != "0" && ${freqthreshold} != "0.0" && ${freqthreshold} != "0.00" ]]; then
     ## now do ASTRAL concatenated trees
     mkdir -p ${output}/results/tree/ASTRAL
 
