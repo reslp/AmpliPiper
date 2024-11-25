@@ -697,25 +697,20 @@ while IFS=$"," read -r primername fwd rev size; do
         HEIGHT=8
     fi
 
-    ## append BOLD names if available and adjust x-axis offset to account for longer names
+    ## append BOLD/BLAST names if available and adjust x-axis offset to account for longer names
     OFFSET=0.3
+    outgroupNew="no"
     if
         [[ ! -z ${ID} ]] \
             ;
     then
         OFFSET=0.7
-        ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameTreeLeaves.py \
+        outgroupNew=$(${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameTreeLeaves.py \
             --primername ${primername} \
             --input ${output}/results/tree/${primername}/${primername}.treefile \
-            --name ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv
+            --name ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv \
+            --outgroup ${outgroup})
     fi
-
-    ## rename outgroup
-    outgroupNew=$(${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameOutgroup.py \
-        --input ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv \
-        --haplotype ${output}/results/haplotypes/${primername}/${primername}_aln.fasta \
-        --primername ${primername} \
-        --samplenames ${outgroup})
 
     ## plot trees with ggplot
     ${wd}/envs/R/bin/Rscript ${wd}/scripts/PlotTree.r \
@@ -800,24 +795,21 @@ then
 
     ## append BOLD names if available and adjust x-axis offset to account for longer names
     OFFSET=0.3
+    outgroupNew="no"
     if
         [[ ! -z ${ID} ]] \
             ;
     then
         OFFSET=0.7
-        ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameTreeLeaves.py \
+        outgroupNew=$(${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameTreeLeaves.py \
             --primername combined \
             --input ${output}/results/tree/Concatenated_loci/Concatenated_loci.treefile \
-            --name ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv
+            --name ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv \
+            --outgroup ${outgroup})
 
     fi
 
-    outgroupNew=$(${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameOutgroup.py \
-        --input ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv \
-        --haplotype ${output}/results/haplotypes/Concatenated_loci/Concatenated_loci.fasta \
-        --primername Concatenated_loci \
-        --samplenames ${outgroup})
-
+    echo ${outgroup} ${outgroupNew}
     ## plot trees with ggplot
     ${wd}/envs/R/bin/Rscript ${wd}/scripts/PlotTree.r \
         ${output}/results/tree/Concatenated_loci/Concatenated_loci.treefile \

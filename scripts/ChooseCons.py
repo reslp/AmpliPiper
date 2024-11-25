@@ -212,10 +212,10 @@ for Locus, v in KEEP.items():
         for key in v1:
             # print(key, FREQ[Locus][ID][key])
             if FreqTH == 0:
-                Out.write(">" + ID + "_Freq_" +
-                          str(round(FREQ[Locus][ID][key], 2)) + "_" + str(C)+"\n")
+                Out.write(">" + ID + "-Freq_" +
+                          str(round(FREQ[Locus][ID][key], 2)) + "-" + str(C)+"\n")
             else:
-                Out.write(">" + ID + "_" + str(C) + "\n")
+                Out.write(">" + ID + "-" + str(C) + "\n")
             Out.write(FASTA[key])
             C += 1
     Out.close()
