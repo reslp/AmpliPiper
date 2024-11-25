@@ -18,13 +18,18 @@ parser.add_option("--names", dest="names", help="Output file")
 (options, args) = parser.parse_args()
 parser.add_option_group(group)
 
+TEST = 0
 NAME = d(list)
 for l in load_data(options.names):
     if l.startswith("SAMPLE"):
         continue
     a = l.rstrip().rstrip(",").split(",")
-    ID = "_".join(a[0].split("_")[:-1])
-    # ID = a[0]
+    if "Freq_" in a[0]:
+        TEST = 1
+        ID = a[0]
+    else:
+        ID = "_".join(a[0].split("_")[:-1])
+        # ID = a[0]
     if len(a) == 1:
         NAME[ID].append("NA")
         continue
@@ -39,29 +44,37 @@ for l in load_data(options.names):
     count = max(HASH[ID][Sim].keys())
     NAME[ID].append(HASH[ID][Sim][count])
 
+if TEST == 1:
+    tree = load_data(options.IN).readline()
+    if options.PI in ["COX1", "ITS", "MATK_RBCL"]:
+        for k, v in NAME.items():
+            ID = "_".join(k.split("_")[:-1])
+            EXT = k.split("_")[-1]
+            tree = tree.replace(ID + "_"+EXT, ID+"-"+v+"_"+EXT)
 
-NAME2 = d(lambda: d(str))
-# now test if
-if options.PI in ["COX1", "ITS", "MATK_RBCL"]:
-    for k, v in NAME.items():
-        for i in range(len(v)):
-            NAME2[k][str(i+1)] = "_".join(v[i])
 else:
-    for k, v in NAME.items():
-        Spec, Sim = list(zip(*v))
-        if len(list(set(Spec))) > 1:
-            NAME2[k]["N"] = "NA"
-        else:
-            NAME2[k]["N"] = "_".join(v[0])
+    NAME2 = d(lambda: d(str))
+    # now test if
+    if options.PI in ["COX1", "ITS", "MATK_RBCL"]:
+        for k, v in NAME.items():
+            for i in range(len(v)):
+                NAME2[k][str(i+1)] = "_".join(v[i])
+    else:
+        for k, v in NAME.items():
+            Spec, Sim = list(zip(*v))
+            if len(list(set(Spec))) > 1:
+                NAME2[k]["N"] = "NA"
+            else:
+                NAME2[k]["N"] = "_".join(v[0])
 
-tree = load_data(options.IN).readline()
-if options.PI in ["COX1", "ITS", "MATK_RBCL"]:
-    for k, v in NAME2.items():
-        for I, v1 in v.items():
-            tree = tree.replace(k+"_"+I, k+"-"+v1+"_"+I)
-else:
-    for k, v in NAME2.items():
-        tree = tree.replace(k, k+"-"+v["N"])
+    tree = load_data(options.IN).readline()
+    if options.PI in ["COX1", "ITS", "MATK_RBCL"]:
+        for k, v in NAME2.items():
+            for I, v1 in v.items():
+                tree = tree.replace(k+"_"+I, k+"-"+v1+"_"+I)
+    else:
+        for k, v in NAME2.items():
+            tree = tree.replace(k, k+"-"+v["N"])
 
 out = open(options.IN, "w")
 out.write(tree+"\n")
