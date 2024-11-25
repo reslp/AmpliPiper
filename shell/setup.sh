@@ -128,19 +128,6 @@ if [ ! -d ${BASEDIR}/envs/asap ]; then
 fi
 echo "asap installation done"
 
-## install Astral
-mamba create \
-    -p ${BASEDIR}/envs/astral \
-    -y \
-    -c bioconda \
-    -c conda-forge \
-    astral-tree=5.7.8 >>${BASEDIR}/envs/logs/setup.log 2>&1
-
-if [ ! -d ${BASEDIR}/envs/astral ]; then
-    echo "Astral installation failed" >>${BASEDIR}/envs/logs/setup.err
-fi
-echo "Astral installation done"
-
 ## install ASTER
 mamba create \
     -p ${BASEDIR}/envs/aster \
