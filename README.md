@@ -105,6 +105,7 @@ CTYB,GATGCCTCAAGCCCTCCTA,AAGATTTCCACGAGCATACCTC,780
 **Optional Arguments**
 
 * `-b` or `--blast`: Enable BLAST search for species identification. When setting this parameter, you need to provide an email address (e.g., `--blast your@email.com`) for using NCBI entrez to retrieve taxonomic information for the BLAST hits (default: disabled).
+* `-c ` or `--similar_consensus`: Change the minimum similarity threshold (in percent) of amplicon_sorter. If the similarity of two clusters are smaller or equal to the threshold, they are considered separartely otherwise they are collapsed prior to consensus reconstruction (default: 96)
 * `-e` or `--exclude`: Provide a text file with samples and loci to exclude from the analysis. Each row should contain the ID of a sample to be excluded. Names need to be identical to the IDs in `samples.csv`
 * `-f` or `--force`: Force overwrite the output folder if it already exists (default: cowardly refusing to overwrite).
 * `-i` or `--partition`: Use partition model for iqtree with combined dataset. :warning: may take very long :warning: (default: disabled)
@@ -147,7 +148,7 @@ If you want to test the pipeline on a test dataset, please check out the `testda
 
 #### Analysis steps
 
-> :warning: _From the 7th of November, since BOLD upgraded from v4 to v5, the API service is migrating and thus unavailable. We advise that you use, for now, BLAST and, if you do not wish to perform species identification, we suggest to change the name of the loci (for example, from `COX1` to `nCOX`)._
+> :warning: _From the 7th of November, since BOLD upgraded from v4 to v5, the API service is migrating and thus unavailable. We advise that you use, for now, BLAST and, if you do not wish to perform species identification, we suggest to change the name of the loci (for example, from `COX1` to `nCOX1`)._
 
 1. **Demultiplexing**: The pipeline uses `demultiplex_fastq.py` to demultiplex the raw fastq files based (1) on correct alignment of the primer sequences at the terminal ends of a raw FASTQ file and (2) on the expected length of the amplicon .
 2. **Filtering**: The pipeline uses `Chopper` to remove low-quality reads based on a PHRED-scaled quality threshold.

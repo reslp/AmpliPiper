@@ -33,7 +33,7 @@ bash ${WD}/shell/AmpliPiper.sh \
     --nreads 1000 \
     --blast your@email.com \
     --similar_consensus 97 \
-    --threads 200 \
+    --threads 10 \
     --kthreshold 0.05 \
     --minreads 50 \
     --sizerange 100 \

@@ -41,10 +41,7 @@ if os.path.isfile(options.IN):
         if l.startswith("SAMPLE"):
             continue
         a = l.rstrip().rstrip(",").split(",")
-        if "Fq_" in a[0].split("_")[-1]:
-            ID = "_".join(a[0].split("_")[:-2])
-        else:
-            ID = "_".join(a[0].split("_")[:-1])
+        ID = "-".join(a[0].split("-")[:-1])
         # ID = a[0]
         if len(a) == 1:
             NAME[ID].append("NA")
@@ -78,7 +75,7 @@ if os.path.isfile(options.IN):
     if options.PI in ["COX1", "ITS", "MATK_RBCL"]:
         for k, v in NAME2.items():
             for I, v1 in v.items():
-                SAh = SAh.replace(k+"_"+I, k+"-"+v1+"_"+I)
+                SAh = SAh.replace(k+"-"+I, k+"-"+v1+"-"+I)
     else:
         for k, v in NAME2.items():
             SAh = SAh.replace(k, k+"-"+v["N"])

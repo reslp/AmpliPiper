@@ -39,7 +39,7 @@ for i in glob.glob(options.IN):
             C += 1
             ID = l.rstrip()
             continue
-        if not ID.endswith("_1"):
+        if not ID.endswith("-1"):
             continue
         Primers[ID]
         if C < 2:

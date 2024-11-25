@@ -121,7 +121,7 @@ output.write("ID,Locus,Reads,Alleles,Ploidy,Likelihood\n")
 
 KEEP = d(lambda: d(list))
 PLOIDY = d(lambda: d(list))
-FREQ = d(lambda: d(list))
+FREQ = d(lambda: d(lambda: d(int)))
 for l in load_data(options.IN):
     if l.startswith("ID,"):
         continue  # Skip header
@@ -146,14 +146,14 @@ for l in load_data(options.IN):
         KEEP[Locus][ID].append(Keep[0])
         # Use "NA" to indicate no ploidy testing
         PLOIDY[Locus][ID].append([1, 1])
-        FREQ[Locus][ID].append(1)
+        FREQ[Locus][ID][0] = 1
         continue
 
     # Skip ploidy testing if more than 4 haplotypes pass the threshold
     if len(Keep) > 4:
         for C in Keep:
             KEEP[Locus][ID].append(C)
-            FREQ[Locus][ID].append(int(Reads[C]) / NewTotal)
+            FREQ[Locus][ID][C] = int(Reads[C]) / NewTotal
         PLOIDY[Locus][ID].append([len(Keep), "NA"])
         continue
 
@@ -164,7 +164,8 @@ for l in load_data(options.IN):
     if BEST is not None:
         for sample in list(set(NEW[BEST]["samples"])):
             KEEP[Locus][ID].append(READID[str(sample)])
-            FREQ[Locus][ID].append(int(Reads[READID[str(sample)]]) / NewTotal)
+            FREQ[Locus][ID][READID[str(sample)]] = int(
+                Reads[READID[str(sample)]]) / NewTotal
         for ploidy in NEW[BEST]["PLOIDY"]:
             PLOIDY[Locus][ID].append(ploidy)
 
@@ -209,11 +210,12 @@ for Locus, v in KEEP.items():
             FASTA[C] += l
         C = 1
         for key in v1:
+            # print(key, FREQ[Locus][ID][key])
             if FreqTH == 0:
-                Out.write(">" + ID + "_" + str(C) + "_Fq:" +
-                          str(round(FREQ[Locus][ID][key], 2))+"\n")
+                Out.write(">" + ID + "-Freq_" +
+                          str(round(FREQ[Locus][ID][key], 2)) + "-" + str(C)+"\n")
             else:
-                Out.write(">" + ID + "_" + str(C) + "\n")
+                Out.write(">" + ID + "-" + str(C) + "\n")
             Out.write(FASTA[key])
             C += 1
     Out.close()

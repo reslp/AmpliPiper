@@ -12,7 +12,7 @@ usage() {
     
     OPTIONAL ARGUMENTS:
     -b | --blast: Use BLAST instead of BOLD for species identification by setting this parameter and by providing an email address for using NCBI Entrez (default: disabled)
-    -c | --similar_consensus: Enable BLAST search for species identification; CAUTION! this may take VERY long (default: 96)
+    -c | --similar_consensus: Change the minimum similarity threshold (in percent) of amplicon_sorter. If the similarity of two clusters are smaller or equal to the threshold, they are considered separartely otherwise they are collapsed prior to consensus reconstruction (default: 96)
     -e | --exclude: Provide a text file with samples and loci to exclude from the analyses. Each row contains one comma-separated sample-ID and locus-ID to be excluded.
     -f | --force: Force overwriting the previous ouput folder (default: Cowardly refusing to overwrite)
     -g | --outgroup: Define an outgroup sample or a comma,separated list of outgroup samples (need to match the IDs in --samples)
@@ -617,17 +617,17 @@ for locus in COX1 ITS MATK_RBCL; do
     fi
 done
 
-if [[ ${LOCI} -gt 1 && $(ls -l ${output}/results/haplotypes/*/*_aln.fasta | wc -l) -gt 1 ]]; then
+if [[ ${LOCI} -gt 1 && $(ls -l ${output}/results/haplotypes/*/*_aln.fasta | wc -l) -gt 1 && ${freqthreshold} != "0" && ${freqthreshold} != "0.0" && ${freqthreshold} != "0.00" ]]; then
 
     ## Species delineation with ASAP for all concatenated Haplotypes
     echo "***** concatenate all loci *****"
 
     conda activate ${wd}/envs/asap
-    mkdir -p ${output}/results/haplotypes/Combined
+    mkdir -p ${output}/results/haplotypes/Concatenated_loci
 
     ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/MergeAln.py \
         --input "${output}/results/haplotypes/*/*_aln.fasta" \
-        --output ${output}/results/haplotypes/Combined/Combined
+        --output ${output}/results/haplotypes/Concatenated_loci/Concatenated_loci
 
     conda deactivate
     echo "finished"
@@ -637,6 +637,13 @@ fi
 echo "***** reconstruct ML trees per locus *****"
 
 mkdir -p ${output}/log/tree
+
+## adjust WIDTH to account for longer name if frequencies are also printed at freqthreshold == 0
+if [[ ${freqthreshold} == 0 ]]; then
+    WIDTH=10
+else
+    WIDTH=8
+fi
 
 while IFS=$"," read -r primername fwd rev size; do
 
@@ -690,26 +697,20 @@ while IFS=$"," read -r primername fwd rev size; do
         HEIGHT=8
     fi
 
-    ## append BOLD names if available and adjust x-axis offset to account for longer names
+    ## append BOLD/BLAST names if available and adjust x-axis offset to account for longer names
     OFFSET=0.3
+    outgroupNew="no"
     if
         [[ ! -z ${ID} ]] \
             ;
     then
         OFFSET=0.7
-        ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameTreeLeaves.py \
+        outgroupNew=$(${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameTreeLeaves.py \
             --primername ${primername} \
             --input ${output}/results/tree/${primername}/${primername}.treefile \
-            --name ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv
-
+            --name ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv \
+            --outgroup ${outgroup})
     fi
-
-    ## rename outgroup
-    outgroupNew=$(${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameOutgroup.py \
-        --input ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv \
-        --haplotype ${output}/results/haplotypes/${primername}/${primername}_aln.fasta \
-        --primername ${primername} \
-        --samplenames ${outgroup})
 
     ## plot trees with ggplot
     ${wd}/envs/R/bin/Rscript ${wd}/scripts/PlotTree.r \
@@ -717,7 +718,7 @@ while IFS=$"," read -r primername fwd rev size; do
         ${output}/results/tree/${primername}/${primername} \
         ${primername} \
         ${OFFSET} \
-        8 \
+        ${WIDTH} \
         ${HEIGHT} \
         ${outgroupNew} \
         $WM \
@@ -731,7 +732,7 @@ done <${primers}
 
 ## repeat for combined FASTA data
 if
-    [[ -s "${output}/results/haplotypes/Combined/Combined.fasta" ]] \
+    [[ -s "${output}/results/haplotypes/Concatenated_loci/Concatenated_loci.fasta" ]] \
         ;
 then
 
@@ -740,41 +741,41 @@ then
             ;
     then
         ## Phylogeny using IQtree with 100 bootsrapping rounds
-        mkdir -p ${output}/results/tree/Combined/
-        cp ${output}/results/haplotypes/Combined/Combined.fasta \
-            ${output}/results/tree/Combined/Combined.fasta
-        cp ${output}/results/haplotypes/Combined/Combined.part \
-            ${output}/results/tree/Combined/Combined
+        mkdir -p ${output}/results/tree/Concatenated_loci/
+        cp ${output}/results/haplotypes/Concatenated_loci/Concatenated_loci.fasta \
+            ${output}/results/tree/Concatenated_loci/Concatenated_loci.fasta
+        cp ${output}/results/haplotypes/Concatenated_loci/Concatenated_loci.part \
+            ${output}/results/tree/Concatenated_loci/Concatenated_loci
 
         conda activate ${wd}/envs/iqtree
 
-        cd ${output}/results/haplotypes/Combined
+        cd ${output}/results/haplotypes/Concatenated_loci
 
         iqtree \
-            -s ${output}/results/tree/Combined/Combined.fasta \
+            -s ${output}/results/tree/Concatenated_loci/Concatenated_loci.fasta \
             -ntmax ${threads} \
             -B 1000 \
-            -p ${output}/results/tree/Combined/Combined \
-            >>${output}/log/tree/Combined_TREE.log 2>&1
+            -p ${output}/results/tree/Concatenated_loci/Concatenated_loci \
+            >>${output}/log/tree/Concatenated_loci_TREE.log 2>&1
 
         conda deactivate
 
     else
 
         ## Phylogeny using IQtree with 100 bootsrapping rounds
-        mkdir -p ${output}/results/tree/Combined/
-        cp ${output}/results/haplotypes/Combined/Combined.fasta \
-            ${output}/results/tree/Combined/Combined
+        mkdir -p ${output}/results/tree/Concatenated_loci/
+        cp ${output}/results/haplotypes/Concatenated_loci/Concatenated_loci.fasta \
+            ${output}/results/tree/Concatenated_loci/Concatenated_loci
 
         conda activate ${wd}/envs/iqtree
 
-        cd ${output}/results/haplotypes/Combined
+        cd ${output}/results/haplotypes/Concatenated_loci
 
         iqtree \
-            -s ${output}/results/tree/Combined/Combined \
+            -s ${output}/results/tree/Concatenated_loci/Concatenated_loci \
             -ntmax ${threads} \
             -B 1000 \
-            >>${output}/log/tree/Combined_TREE.log 2>&1
+            >>${output}/log/tree/Concatenated_loci_TREE.log 2>&1
 
         conda deactivate
 
@@ -784,53 +785,50 @@ then
 
     ## adjust tree height based on samples in dataset
     if
-        [[ $(($(grep "^>" ${output}/results/haplotypes/Combined/Combined.fasta | wc -l) / 3)) -gt 8 ]] \
+        [[ $(($(grep "^>" ${output}/results/haplotypes/Concatenated_loci/Concatenated_loci.fasta | wc -l) / 3)) -gt 8 ]] \
             ;
     then
-        HEIGHT=$(($(grep "^>" ${output}/results/haplotypes/Combined/Combined.fasta | wc -l) / 3))
+        HEIGHT=$(($(grep "^>" ${output}/results/haplotypes/Concatenated_loci/Concatenated_loci.fasta | wc -l) / 3))
     else
         HEIGHT=8
     fi
 
     ## append BOLD names if available and adjust x-axis offset to account for longer names
     OFFSET=0.3
+    outgroupNew="no"
     if
         [[ ! -z ${ID} ]] \
             ;
     then
         OFFSET=0.7
-        ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameTreeLeaves.py \
+        outgroupNew=$(${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameTreeLeaves.py \
             --primername combined \
-            --input ${output}/results/tree/Combined/Combined.treefile \
-            --name ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv
+            --input ${output}/results/tree/Concatenated_loci/Concatenated_loci.treefile \
+            --name ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv \
+            --outgroup ${outgroup})
 
     fi
 
-    outgroupNew=$(${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameOutgroup.py \
-        --input ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv \
-        --haplotype ${output}/results/haplotypes/Combined/Combined.fasta \
-        --primername Combined \
-        --samplenames ${outgroup})
-
+    echo ${outgroup} ${outgroupNew}
     ## plot trees with ggplot
     ${wd}/envs/R/bin/Rscript ${wd}/scripts/PlotTree.r \
-        ${output}/results/tree/Combined/Combined.treefile \
-        ${output}/results/tree/Combined/Combined \
-        CombinedLoci \
+        ${output}/results/tree/Concatenated_loci/Concatenated_loci.treefile \
+        ${output}/results/tree/Concatenated_loci/Concatenated_loci \
+        Concatenated_loci \
         ${OFFSET} \
-        8 \
+        ${WIDTH} \
         ${HEIGHT} \
         ${outgroupNew} \
         ${WM} \
-        >>${output}/log/tree/Combined_TREE.log 2>&1
+        >>${output}/log/tree/Concatenated_loci_TREE.log 2>&1
 
     conda deactivate
 
-    echo "ML tree for Combined dataset finished"
+    echo "ML tree for Concatenated_loci dataset finished"
 
 fi
 
-if [[ ${LOCI} -gt 1 ]]; then
+if [[ ${LOCI} -gt 1 && ${freqthreshold} != "0" && ${freqthreshold} != "0.0" && ${freqthreshold} != "0.00" ]]; then
     ## now do ASTRAL concatenated trees
     mkdir -p ${output}/results/tree/ASTRAL
 
@@ -856,15 +854,15 @@ if [[ ${LOCI} -gt 1 ]]; then
             [[ ! -z ${ID} ]] \
                 ;
         then
-            OFFSET=0.7
+            OFFSET=0.5
         else
-            OFFSET=0.3
+            OFFSET=0.1
         fi
 
         ## reconstruct astral consensus tree
-        conda activate ${wd}/envs/astral
+        conda activate ${wd}/envs/aster
 
-        astral \
+        wastral \
             -i ${output}/results/tree/ASTRAL/astral_input.tree \
             -o ${output}/results/tree/ASTRAL/ASTRAL.tree \
             >>${output}/log/tree/Astral.log 2>&1
@@ -879,7 +877,7 @@ if [[ ${LOCI} -gt 1 ]]; then
             ${output}/results/tree/ASTRAL/ASTRAL \
             ASTRAL \
             ${OFFSET} \
-            8 \
+            ${WIDTH} \
             ${HEIGHT} \
             ${outgroupNew} \
             ${WM} \
@@ -931,16 +929,16 @@ done <${primers}
 
 ## run ASAP on concatenated FASTA if file not empty
 if
-    [[ -s "${output}/results/haplotypes/Combined/Combined.fasta" ]] \
+    [[ -s "${output}/results/haplotypes/Concatenated_loci/Concatenated_loci.fasta" ]] \
         ;
 then
 
-    mkdir ${output}/results/SpeciesDelim/Combined
+    mkdir ${output}/results/SpeciesDelim/Concatenated_loci
 
     asap \
-        -a ${output}/results/haplotypes/Combined/Combined.fasta \
-        -o ${output}/results/SpeciesDelim/Combined \
-        >>${output}/log/SpecDelim/Combined_SD.log 2>&1
+        -a ${output}/results/haplotypes/Concatenated_loci/Concatenated_loci.fasta \
+        -o ${output}/results/SpeciesDelim/Concatenated_loci \
+        >>${output}/log/SpecDelim/Concatenated_loci_SD.log 2>&1
     #fi
     conda deactivate
 
