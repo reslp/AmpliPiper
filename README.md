@@ -43,6 +43,10 @@ All installation commands and additional *Python* and *R* package that are requi
 
 ### Installation 
 
+If you want to run AmpliPiper on a Linux or Windows system, you can build and use the AmpliPiper pipeline using Docker. Alternatively, you can install and execute AmpliPiper natively on UNIX systems (Linux and MacOS) with conda and mamba.
+
+#### (1) Installation with Conda and Mamba
+
 The installation of dependencies requires [mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) and [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) to be already installed on your system.
 
 To install the pipeline program:
@@ -63,9 +67,13 @@ At the end of the installation, you will find all the needed dependencies in a f
 
 This process may take a while and there might be problems when installing: please check [TROUBLESHOOTING - Installation](https://astrabert.github.io/AmpliPiper-docs/docs/search/#installation) in the [complete_documentation](https://astrabert.github.io/AmpliPiper-docs/).
 
-AmpliPiper runs on UNIX platforms. The installation and execution of AmpliPiper has been successfully tested on different Linux systems (Ubuntu/CentOS). However, due to a [dependency issue in amplicon_sorter](https://github.com/avierstr/amplicon_sorter/issues/14) it is not yet possible to run AmpliPiper on Apple computers with macos.
+AmpliPiper runs on UNIX platforms. The installation and execution of AmpliPiper has been successfully tested on different Linux systems (Ubuntu/CentOS) and on macOS. However, ASAP does not successful compile on macOS and can thus not be executed when AmpliPiper is installed on a mac.
 
-After that you should be ready to execute the shell script `AmpliPiper.sh` in the `shell/` folder to carry out all steps in the analysis pipeline.
+#### (2) Building from `Docker` image
+
+Alternatively, it is possible to build AmpliPiper from a Docker image. A detailed description on how to install Docker and how to build AmpliPiper can be found [here](Docker_README.md).
+
+After installing all depenendcies, you should be ready to execute the shell script `AmpliPiper.sh` in the `shell/` folder to carry out all steps in the analysis pipeline.
 
 ### Usage
 
