@@ -108,4 +108,12 @@ ggsave(
     height = num_rows * 6
 )
 
+pdf_output <- "distance_matrices.pdf"
+ggsave(
+    filename = pdf_output,
+    plot = grid.arrange(grobs = plots, ncol = num_cols),
+    width = num_cols * 7,
+    height = num_rows * 6
+)
+
 message(sprintf("Plot saved to %s", png_output))

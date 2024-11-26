@@ -44,6 +44,9 @@ PLOT <- ggplot(DATA, aes(y = ID, x = Locus, fill = as.factor(NoAlleles))) +
 OUTPUT <- paste0(input, ".png")
 ggsave(PLOT, file = OUTPUT, width = width, height = height)
 
+OUTPUT <- paste0(input, ".pdf")
+ggsave(PLOT, file = OUTPUT, width = width, height = height)
+
 # Create a palette based on the number of unique ExpectedPloidy
 expected_ploidy_palette <- extend_palette(length(unique(DATA$ExpectedPloidy)))
 
@@ -61,4 +64,7 @@ PLOT <- ggplot(DATA, aes(y = ID, x = Locus, fill = as.factor(ExpectedPloidy))) +
 
 # Save file as PNG
 OUTPUT <- paste0(input, "_ExpectedPloidy.png")
+ggsave(PLOT, file = OUTPUT, width = width, height = height)
+
+OUTPUT <- paste0(input, "_ExpectedPloidy.pdf")
 ggsave(PLOT, file = OUTPUT, width = width, height = height)
