@@ -2,7 +2,6 @@
 .gitignore
 .old/
 docker/
-testdata/
 tutorial/
 compose.yaml
 compose.sh
