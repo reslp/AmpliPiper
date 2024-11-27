@@ -93,12 +93,35 @@ Other installations processes [here](https://docs.docker.com/engine/install/)
 
 ## Run AmpliPiper inside Docker
 
-### 1. Use Docker image directly
+### 1. Use `docker compose` (RECOMMENDED)
+
+Docker offers an integrated workflow that runs your images taking care of all the runtime arguments with a [`compose.yaml`](./compose.yaml) file. To run AmpliPiper container interactively, you just need to:
+
+- Modify the  `USERDATA_PATH` variable in the [`.env`](./.env) to match with the portion of your file-system you want to inject into Docker
+
+- > ⚠️: _If you are on Windows, you should **use PowerShell** and specify your paths in the `.env` file as `c:/path/to/your/data`._
+
+- Run the following command **for Linux**:
+
+    ```bash
+    bash compose.sh
+    ```
+
+- Run the following command **for Windows PowerShell**:
+
+    ```powershell
+    .\compose.ps1
+    ```
+
+You'll find the volume you mounted in the container under `/app/userdata/`.
+
+
+### 2. Use Docker image directly
 
 For now AmpliPiper Docker image is available only for testing, and canbe obtained simply running from **PowerShell**/**CMD** (Windows), **Terminal** (macOS) and **integrated terminal** (Linux distros):
 
 ```bash
-docker pull ghcr.io/nmhvienna/amplipiper:main
+docker pull ghcr.io/nhmvienna/amplipiper:main
 ```
 
 If it does not work on Linux for permission issues, you should run this as `sudo`.
@@ -108,7 +131,7 @@ You can now run the image interactively:
 ```bash
 docker run -i \
     -t \
-    ghcr.io/nmhvienna/amplipiper:main \
+    ghcr.io/nhmvienna/amplipiper:main \
     /bin/bash
 ```
 
@@ -125,38 +148,11 @@ git clone https://github.com/nhmvienna/AmpliPiper.git
 docker run -i \
     -t \
     -v ./AmpliPiper/:/app/userdata/ \
-    ghcr.io/nmhvienna/amplipiper:main \
+    ghcr.io/nhmvienna/amplipiper:main \
     /bin/bash
 ```
 
 Now all the content in your local `AmpliPiper` folder is stored under `/app/userdata`.
-
-### 2. Use `docker compose`
-
-Docker offers an integrated workflow that runs your images taking care of all the runtime arguments with a [`compose.yaml`](./compose.yaml) file. To run AmpliPiper container interactively, you just need to:
-
-- Modify the  `USERDATA_PATH` variable in the [`.env`](./.env) to match with the portion of your file-system you want to inject into Docker
-- Use the following commands:
-
-```bash
-sudo docker ps -qf "name=amplipiper_container" > docker_check.log
-if  [ -s "docker_check.log" ]
-then
-    echo "There is a container named 'amplipiper_container', deleting it to create a new one..."
-    sudo docker rm --force $(sudo docker ps -qf "name=amplipiper_container")
-else
-    echo "There is no container named 'amplipiper_container', creating one..."
-fi
-rm -rf docker_check.log
-sudo docker compose up -d # Launch this command within the same directory in which you have the compose.yaml file
-sudo docker exec -it $(docker ps -qf "name=amplipiper_container") /bin/bash
-```
-
-You'll find the volume you mounted in the container under `/app/userdata/`.
-
-> 🚀: _If you are on Linux, you can easily run `bash compose.sh` from inside the AmpliPiper folder after having modified the the  `USERDATA_PATH` variable in the [`.env`](./.env) to match with the portion of your file-system you want to inject into Docker_
-
-> ⚠️: _If you are on Windows, you should **use PowerShell** to run the commands and you should specify your paths in the `.env` file as `c:/path/to/your/data`_
 
 ## Test AmpliPiper
 
