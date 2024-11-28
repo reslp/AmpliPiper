@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 ## Usage function
 usage() {
