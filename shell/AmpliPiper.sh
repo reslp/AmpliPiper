@@ -46,10 +46,11 @@ partition="no"      # -i
 outgroup="no"       # -g
 freqthreshold=0.1   # -y
 
+
 os="$(uname -s)"
 
 ## Find basedir
-tmp=$(dirname $0)
+tmp=$(pwd)
 wd=${tmp%/*} ######## <- wd is now the base directory below the shell/ folder
 
 if
@@ -235,7 +236,7 @@ fi
 
 ## remove watermark in phylogenetic trees if this is REALLY wanted
 if
-    [[ ${nowatermark} = "yes" ]] \
+    [[ ${nowatermark} == "yes" ]] \
         ;
 then
     WM="NO"
