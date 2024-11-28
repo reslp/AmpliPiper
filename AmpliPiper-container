@@ -1,0 +1,44 @@
+#!/bin/bash
+# written by Philipp Resl
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+ HT="darwin"
+ US="root"
+else
+ HT="linux"
+ US=$USER
+fi
+
+# this needs to be set because on Linux docker created files will be owned by root by default.
+unset DOCKER_USER
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+ DOCKER_USER="--user $(id -u):$(id -g)"
+elif [[ "$OSTYPE" == "darwin"* ]]; then #nothing to be done on MacOS
+ DOCKER_USER=""
+fi
+
+
+HOW=""
+
+if command -v docker 2>&1 > /dev/null;
+then
+		HOW="docker"
+fi
+if command -v singularity 2>&1 > /dev/null; #singularity is preferred over docker
+then
+		HOW="singularity"
+fi
+
+if [ "$HOW" == "docker" ]; then
+	BINDPOINTS="-v $(pwd):/data"
+	echo "Running AmpliPiper through docker"
+	docker run --rm -it $DOCKER_USER $BINDPOINTS -w /data reslp/amplipiper:3d41924 AmpliPiper.sh $@	
+fi
+
+if [ "$HOW" == "singularity" ]; then
+	BINDPOINTS="-B $(pwd)"
+	echo "Running AmpliPiper through singularity"
+	singularity exec $BINDPOINTS docker://reslp/amplipiper:3d41924 AmpliPiper.sh $@	
+fi
+#Command will look something like this:
+#docker run --rm -it --user $(id -u):$(id -g) -v $(pwd):/home/$USER/phylociraptor --privileged reslp/phylociraptor:0.9.1
