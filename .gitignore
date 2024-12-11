@@ -8,3 +8,4 @@
 /scripts/altersvg_old.py
 #/testdata/main.sh
 .DS_Store
+/simulations/results
