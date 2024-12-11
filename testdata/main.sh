@@ -23,7 +23,7 @@ for Filepath in ${WD}/testdata/reads/*fastq.gz; do
     echo ${ID},${Filepath} >>${WD}/testdata/data/samples.csv
 done
 
-# (3) run AmpliPiper
+# (3a) run AmpliPiper
 
 bash ${WD}/shell/AmpliPiper.sh \
     --samples ${WD}/testdata/data/samples.csv \
@@ -38,4 +38,22 @@ bash ${WD}/shell/AmpliPiper.sh \
     --minreads 50 \
     --sizerange 100 \
     --outgroup He_mor_41 \
+    --force
+
+# (3b) run AmpliPiper and keep all consensus sequences
+
+bash ${WD}/shell/AmpliPiper.sh \
+    --samples ${WD}/testdata/data/samples.csv \
+    --primers ${WD}/testdata/data/primers.csv \
+    --output ${WD}/testdata/results/demo_allCons \
+    --quality 10 \
+    --nreads 1000 \
+    --blast your@email.com \
+    --similar_consensus 97 \
+    --threads 100 \
+    --kthreshold 0.05 \
+    --minreads 50 \
+    --sizerange 100 \
+    --outgroup He_mor_41 \
+    --freqthreshold 0 \
     --force
