@@ -1,4 +1,4 @@
-## run SImulation pipleine
+## run Simulation pipeline
 
 WD='</path/to/AmpliPiper>'
 # e.g. WD=/media/inter/pipelines/AmpliPiper
