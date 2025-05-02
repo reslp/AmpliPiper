@@ -38,6 +38,7 @@ echo "*********************"
 echo ""
 echo "testing if Conda and Mamba are installed..."
 
+mkdir -p $BASEDIR/logs
 command -v conda >/dev/null 2>&1 || {
     echo >&2 "The installation pipeline requires Anaconda/Miniconda but it is not installed. Please check here: https://anaconda.org/ for more details. Aborting."
     echo "Conda not installed" >>${BASEDIR}/logs/dep.err
