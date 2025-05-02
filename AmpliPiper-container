@@ -19,26 +19,26 @@ fi
 
 
 HOW=""
-
 if command -v docker 2>&1 > /dev/null;
 then
 		HOW="docker"
-fi
-if command -v singularity 2>&1 > /dev/null; #singularity is preferred over docker
+elif command -v singularity 2>&1 > /dev/null; #singularity is preferred over docker
 then
 		HOW="singularity"
 fi
 
 if [ "$HOW" == "docker" ]; then
-	BINDPOINTS="-v $(pwd):/data"
+	BINDPOINTS="-v $(pwd):$(pwd)"
 	echo "Running AmpliPiper through docker"
-	docker run --rm -it $DOCKER_USER $BINDPOINTS -w /data reslp/amplipiper:3d41924 AmpliPiper.sh $@	
+	echo "DOCKER COMMAND: docker run --rm -it $DOCKER_USER $BINDPOINTS -w $(pwd) reslp/amplipiper:test AmpliPiper.sh $@"
+	docker run --rm -it $DOCKER_USER $BINDPOINTS -w $(pwd) reslp/amplipiper:test AmpliPiper.sh $@	
 fi
 
 if [ "$HOW" == "singularity" ]; then
 	BINDPOINTS="-B $(pwd)"
 	echo "Running AmpliPiper through singularity"
-	singularity exec $BINDPOINTS docker://reslp/amplipiper:3d41924 AmpliPiper.sh $@	
+	echo "SINGULARITY/APPTAINER COMMAND: singularity exec $BINDPOINTS docker://reslp/amplipiper:test AmpliPiper.sh $@"
+	singularity exec $BINDPOINTS docker://reslp/amplipiper:test AmpliPiper.sh $@	
 fi
 #Command will look something like this:
 #docker run --rm -it --user $(id -u):$(id -g) -v $(pwd):/home/$USER/phylociraptor --privileged reslp/phylociraptor:0.9.1
