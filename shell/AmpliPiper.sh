@@ -1,7 +1,4 @@
 #!/bin/bash
-set -e
-set -x 
-
 ## Usage function
 usage() {
     echo "Usage: HAPLOTYPES -s, --samples SAMPLES_CSV -p, --primers PRIMERS_CSV -o,--output OUTPUT_FOLDER  [-q, --quality QUALITY] 
