@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -x 
 
 ## Usage function
 usage() {
@@ -51,7 +52,16 @@ os="$(uname -s)"
 
 ## Find basedir
 tmp=$(pwd)
-wd=${tmp%/*} ######## <- wd is now the base directory below the shell/ folder
+wd=$tmp  #${tmp%/*} ######## <- wd is now the base directory below the shell/ folder
+
+# extra check for container execution to account for different paths
+if [[ $AMICONTAINER == "yes" ]]; then
+	echo "I am in docker"
+	ampdir="/app/AmpliPiper"
+else
+	echo "I am local"
+	ampdir=$wd
+fi
 
 if
     [[ -d $wd/logs ]] \
@@ -63,10 +73,10 @@ fi
 
 ## Test if software already installed if not, start installation
 if
-    [[ ! -d $wd/envs ]] \
+    [[ ! -d $ampdir/envs ]] \
         ;
 then
-    bash $wd/shell/setup.sh
+    bash $ampdir/shell/setup.sh
 fi
 
 ## Test if dependencies correctly installed
@@ -95,7 +105,7 @@ then
     # print errors, if there are any and quit
     while read -r line; do
         echo $line
-    done <$wd/envs/logs/setup.err
+    done <$ampdir/envs/logs/setup.err
     printf "######################\n\n\n"
     usage
     exit 1
@@ -188,9 +198,19 @@ do
     esac
 done
 
+
+#check if output path is absolute or relative
+if [[ "$output" = /* ]]
+then
+   echo "Output direcory: $output"
+else
+   output="$wd/$output"
+   echo "New Output directory: $output"
+fi
+
 ## Is the sample input file provided?
 if
-    [[ -z "${samples}" ]] \
+    [[ -z "${samples}" || ! -f "${primers}" ]] \
         ;
 then
     printf "\n######################\nMissing required argument: INPUT FILE with names and paths to raw data in csv format\n######################\n\n\n"
@@ -199,7 +219,7 @@ fi
 
 ## Is the primer input file provided?
 if
-    [[ -z "${primers}" ]] \
+    [[ -z "${primers}"  || ! -f "${primers}" ]] \
         ;
 then
     printf "\n######################\nMissing required argument: PRIMERS_TABLE\n######################\n\n\n"
@@ -245,21 +265,20 @@ else
 fi
 
 ###
-
 parametersettings="${quality},${similarconsensus},${nreads},${sizerange},${minreads},${threads},${kthres},${force},${blast},${partition},${outgroup}"
 ###
 
 ## make sure the EOL character is \n and NOT \r\n in the samples and primers files ;-)
-${wd}/envs/python_dependencies/bin/sed -i 's/\r$//' ${samples}
-${wd}/envs/python_dependencies/bin/sed -i 's/\r$//' ${primers}
+${ampdir}/envs/python_dependencies/bin/sed -i 's/\r$//' ${samples}
+${ampdir}/envs/python_dependencies/bin/sed -i 's/\r$//' ${primers}
 
 ## remove spaces
-${wd}/envs/python_dependencies/bin/sed -i 's/ //g' ${samples}
-${wd}/envs/python_dependencies/bin/sed -i 's/ //g' ${primers}
+${ampdir}/envs/python_dependencies/bin/sed -i 's/ //g' ${samples}
+${ampdir}/envs/python_dependencies/bin/sed -i 's/ //g' ${primers}
 
 ## remove empty lines
-${wd}/envs/python_dependencies/bin/sed -i '/^$/d' ${samples}
-${wd}/envs/python_dependencies/bin/sed -i '/^$/d' ${primers}
+${ampdir}/envs/python_dependencies/bin/sed -i '/^$/d' ${samples}
+${ampdir}/envs/python_dependencies/bin/sed -i '/^$/d' ${primers}
 
 # Test if FASTQ input files in samples file do exist
 while IFS=$"," read -r samplename file; do
@@ -316,9 +335,9 @@ mkdir -p ${output}/shell/demult1
 mkdir -p ${output}/log/summary
 mkdir ${output}/data/filtered
 
-conda activate ${wd}/envs/python_dependencies
+conda activate ${ampdir}/envs/python_dependencies
 
-${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/CompPrimers.py \
+python3 ${wd}/scripts/CompPrimers.py \
     -p ${primers} \
     -o ${output}/results/summary/primers/primers_dist.csv \
     >${output}/results/summary/min_edit.dist 2>${output}/log/summary/primerdist.log
@@ -326,7 +345,6 @@ ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/CompPrimers.py \
 conda deactivate
 
 echo "finished"
-
 ## count number of loci in primers file:
 LOCI=$(awk '!/^ID,/' ${primers} | wc -l)
 
@@ -344,6 +362,7 @@ while IFS=$"," read -r samplename file; do
     fi
 
     echo """
+    set -e
     
     eval \"\$(conda shell.bash hook)\"
 
@@ -352,13 +371,13 @@ while IFS=$"," read -r samplename file; do
     if [[ ${file} == "\*.gz$" ]]; then
         cp -n ${file} ${output}/data/raw/${samplename}.fastq.gz
     else
-        conda activate ${wd}/envs/chopper
+        conda activate ${ampdir}/envs/chopper
         pigz -c ${file} > ${output}/data/raw/${samplename}.fastq.gz
         conda deactivate
     fi
 
     ## filter raw sequences with chopper
-    conda activate ${wd}/envs/chopper
+    conda activate ${ampdir}/envs/chopper
     pigz -dc ${output}/data/raw/${samplename}.fastq.gz |
         chopper -q ${quality} 2>> ${output}/log/demulti/${samplename}_demulti.log | pigz \
         >${output}/data/filtered/${samplename}-filt.fastq.gz
@@ -368,8 +387,8 @@ while IFS=$"," read -r samplename file; do
     ## demultiplex per locus and sample
     mkdir ${output}/data/demultiplexed/${samplename}
 
-    conda activate ${wd}/envs/python_dependencies
-    ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/DemultFastq.py \
+    conda activate ${ampdir}/envs/python_dependencies
+    python3 ${wd}/scripts/DemultFastq.py \
         -i ${output}/data/filtered/${samplename}-filt.fastq.gz \
         -p $primers \
         -o ${output}/data/demultiplexed/${samplename} \
@@ -386,7 +405,7 @@ while IFS=$"," read -r samplename file; do
 done <${samples}
 
 ## Execute shell scripts in parallel
-conda activate ${wd}/envs/parallel
+conda activate ${ampdir}/envs/parallel
 echo "will cite" | parallel --citation >/dev/null 2>&1
 parallel --bar -j${threads} bash ::: ${output}/shell/demult1/*.sh
 conda deactivate
@@ -422,6 +441,7 @@ while IFS=$"," read -r samplename file; do
         fi
 
         echo """
+	set -e
 
         ## source conda
         eval \"\$(conda shell.bash hook)\"
@@ -432,7 +452,7 @@ while IFS=$"," read -r samplename file; do
         cd ${output}/results/consensus_seqs/${samplename}
 
         ##AmpliconSorter consensus
-        conda activate ${wd}/envs/python_dependencies
+        conda activate ${ampdir}/envs/python_dependencies
         ## test if OS is Mac
         if
             [[ ${os} == "Darwin" ]] \
@@ -462,7 +482,7 @@ while IFS=$"," read -r samplename file; do
 done <${samples}
 
 ## Execute shell scripts in parallel
-conda activate ${wd}/envs/parallel
+conda activate ${ampdir}/envs/parallel
 echo "will cite" | parallel --citation >/dev/null 2>&1
 parallel --bar -j${threads} bash ::: ${output}/shell/demult2/*.sh
 conda deactivate
@@ -470,16 +490,16 @@ conda deactivate
 ## make CSV summary
 echo "***** Summarize Ampliconsorter output *****"
 
-${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/ParseSummary.py \
+${ampdir}/envs/python_dependencies/bin/python3 ${ampdir}/scripts/ParseSummary.py \
     --path ${output} \
     --primer ${primers} \
     --samples ${samples} \
     >${output}/results/summary/summary.csv
 
-conda activate ${wd}/envs/python_dependencies
+conda activate ${ampdir}/envs/python_dependencies
 
 ## choose haplotypes
-${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/ChooseCons.py \
+${ampdir}/envs/python_dependencies/bin/python3 ${ampdir}/scripts/ChooseCons.py \
     --input ${output}/results/summary/summary.csv \
     --path ${output}/results/consensus_seqs \
     --output ${output}/results/haplotypes \
@@ -491,17 +511,15 @@ conda deactivate
 mv ${output}/results/summary/summary.csv.ploidy ${output}/results/summary/summary.csv
 
 ## Plot Heatmap with missing data
-conda activate ${wd}/envs/R
-${wd}/envs/R/bin/Rscript ${wd}/scripts/MissingDataHeatmap.r \
+conda activate ${ampdir}/envs/R
+Rscript ${ampdir}/scripts/MissingDataHeatmap.r \
     ${output}/results/summary/summary.csv \
     >>${output}/log/ampliconsorter/Summary_AS.log 2>&1
 conda deactivate
 
 echo " finished"
-
 ## align haplotypes
 echo "***** align haplotypes *****"
-
 mkdir -p ${output}/log/tree
 
 while IFS=$"," read -r primername fwd rev size; do
@@ -530,12 +548,11 @@ while IFS=$"," read -r primername fwd rev size; do
     fi
 
     ## mafft alignment
-    conda activate ${wd}/envs/mafft
-
+    conda activate ${ampdir}/envs/mafft
     mafft \
         --adjustdirectionaccurately \
         ${output}/results/haplotypes/${primername}/${primername}.fasta 2>>${output}/log/tree/${primername}_TREE.log |
-        ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/fixIDAfterMafft.py \
+        ${ampdir}/envs/python_dependencies/bin/python3 ${ampdir}/scripts/fixIDAfterMafft.py \
             --input ${output}/results/haplotypes/${primername}/${primername}.fasta \
             --Alignment - \
             >${output}/results/haplotypes/${primername}/${primername}_aln.fasta
@@ -548,10 +565,10 @@ done <${primers}
 
 echo "***** Calculate Genetic Distances *****"
 
-conda activate ${wd}/envs/R
+conda activate ${ampdir}/envs/R
 
-${wd}/envs/R/bin/Rscript ${wd}/scripts/GeneticDist.r \
-    ${output}/results/haplotypes \
+${ampdir}/envs/R/bin/Rscript ${ampdir}/scripts/GeneticDist.r \
+	${output}/results/haplotypes \
     >>${output}/log/ampliconsorter/GeneticDistance_AS.log 2>&1
 
 echo "finished"
@@ -581,18 +598,18 @@ while IFS=$"," read -r primername fwd rev size; do
         fi
 
         ## use BOLD/BLAST API for Species identification
-        conda activate ${wd}/envs/python_dependencies
+        conda activate ${ampdir}/envs/python_dependencies
 
         if [[ ${blast} != "no" ]]; then
             mkdir -p ${output}/results/SpeciesID/${SE}/${primername}/summarized_outputs
-            ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/BLASTapi.py \
+            ${ampdir}/envs/python_dependencies/bin/python3 ${ampdir}/scripts/BLASTapi.py \
                 -i ${output}/results/haplotypes/${primername}/${primername}_aln.fasta \
                 -e ${blast} \
                 -o ${output}/results/SpeciesID/${SE}/${primername}/summarized_outputs \
                 >>${output}/log/SpecID/${primername}_SI.log 2>&1
         else
             mkdir -p ${output}/results/SpeciesID/${SE}/${primername}
-            ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/bold_api/BOLDapi.py \
+            ${ampdir}/envs/python_dependencies/bin/python3 ${ampdir}/scripts/bold_api/BOLDapi.py \
                 -i ${output}/results/haplotypes/${primername}/${primername}_aln.fasta \
                 -p ${primername} \
                 -c ${wd}/scripts/style.css \
@@ -624,10 +641,10 @@ if [[ ${LOCI} -gt 1 && $(ls -l ${output}/results/haplotypes/*/*_aln.fasta | wc -
     ## Species delineation with ASAP for all concatenated Haplotypes
     echo "***** concatenate all loci *****"
 
-    conda activate ${wd}/envs/asap
+    conda activate ${ampdir}/envs/asap
     mkdir -p ${output}/results/haplotypes/Concatenated_loci
 
-    ${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/MergeAln.py \
+    ${ampdir}/envs/python_dependencies/bin/python3 ${ampdir}/scripts/MergeAln.py \
         --input "${output}/results/haplotypes/*/*_aln.fasta" \
         --output ${output}/results/haplotypes/Concatenated_loci/Concatenated_loci
 
@@ -637,6 +654,7 @@ fi
 
 ## reconstruct trees if > 3 haplotypes in input
 echo "***** reconstruct ML trees per locus *****"
+echo "WORKING DIR: $wd"
 
 mkdir -p ${output}/log/tree
 
@@ -677,7 +695,7 @@ while IFS=$"," read -r primername fwd rev size; do
     cp ${output}/results/haplotypes/${primername}/${primername}_aln.fasta \
         ${output}/results/tree/${primername}/${primername}
 
-    conda activate ${wd}/envs/iqtree
+    conda activate ${ampdir}/envs/iqtree
 
     iqtree \
         -s ${output}/results/tree/${primername}/${primername} \
@@ -687,7 +705,7 @@ while IFS=$"," read -r primername fwd rev size; do
 
     conda deactivate
 
-    conda activate ${wd}/envs/R
+    conda activate ${ampdir}/envs/R
 
     ## adjust tree height based on samples in dataset
     if
@@ -707,7 +725,7 @@ while IFS=$"," read -r primername fwd rev size; do
             ;
     then
         OFFSET=0.7
-        outgroupNew=$(${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameTreeLeaves.py \
+        outgroupNew=$(${ampdir}/envs/python_dependencies/bin/python3 ${ampdir}/scripts/RenameTreeLeaves.py \
             --primername ${primername} \
             --input ${output}/results/tree/${primername}/${primername}.treefile \
             --name ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv \
@@ -715,7 +733,7 @@ while IFS=$"," read -r primername fwd rev size; do
     fi
 
     ## plot trees with ggplot
-    ${wd}/envs/R/bin/Rscript ${wd}/scripts/PlotTree.r \
+    ${ampdir}/envs/R/bin/Rscript ${ampdir}/scripts/PlotTree.r \
         ${output}/results/tree/${primername}/${primername}.treefile \
         ${output}/results/tree/${primername}/${primername} \
         ${primername} \
@@ -749,7 +767,7 @@ then
         cp ${output}/results/haplotypes/Concatenated_loci/Concatenated_loci.part \
             ${output}/results/tree/Concatenated_loci/Concatenated_loci
 
-        conda activate ${wd}/envs/iqtree
+        conda activate ${ampdir}/envs/iqtree
 
         cd ${output}/results/haplotypes/Concatenated_loci
 
@@ -769,7 +787,7 @@ then
         cp ${output}/results/haplotypes/Concatenated_loci/Concatenated_loci.fasta \
             ${output}/results/tree/Concatenated_loci/Concatenated_loci
 
-        conda activate ${wd}/envs/iqtree
+        conda activate ${ampdir}/envs/iqtree
 
         cd ${output}/results/haplotypes/Concatenated_loci
 
@@ -783,7 +801,7 @@ then
 
     fi
 
-    conda activate ${wd}/envs/R
+    conda activate ${ampdir}/envs/R
 
     ## adjust tree height based on samples in dataset
     if
@@ -803,7 +821,7 @@ then
             ;
     then
         OFFSET=0.7
-        outgroupNew=$(${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/RenameTreeLeaves.py \
+        outgroupNew=$(${ampdir}/envs/python_dependencies/bin/python3 ${ampdir}/scripts/RenameTreeLeaves.py \
             --primername combined \
             --input ${output}/results/tree/Concatenated_loci/Concatenated_loci.treefile \
             --name ${output}/results/SpeciesID/${SE}/${ID}/summarized_outputs/final.csv \
@@ -813,7 +831,7 @@ then
 
     echo ${outgroup} ${outgroupNew}
     ## plot trees with ggplot
-    ${wd}/envs/R/bin/Rscript ${wd}/scripts/PlotTree.r \
+    ${ampdir}/envs/R/bin/Rscript ${ampdir}/scripts/PlotTree.r \
         ${output}/results/tree/Concatenated_loci/Concatenated_loci.treefile \
         ${output}/results/tree/Concatenated_loci/Concatenated_loci \
         Concatenated_loci \
@@ -862,7 +880,7 @@ if [[ ${LOCI} -gt 1 && ${freqthreshold} != "0" && ${freqthreshold} != "0.0" && $
         fi
 
         ## reconstruct astral consensus tree
-        conda activate ${wd}/envs/aster
+        conda activate ${ampdir}/envs/aster
 
         wastral \
             -i ${output}/results/tree/ASTRAL/astral_input.tree \
@@ -871,10 +889,10 @@ if [[ ${LOCI} -gt 1 && ${freqthreshold} != "0" && ${freqthreshold} != "0.0" && $
 
         conda deactivate
 
-        conda activate ${wd}/envs/R
+        conda activate ${ampdir}/envs/R
 
         ## plot tree
-        ${wd}/envs/R/bin/Rscript ${wd}/scripts/PlotTree_astral.r \
+        ${ampdir}/envs/R/bin/Rscript ${ampdir}/scripts/PlotTree_astral.r \
             ${output}/results/tree/ASTRAL/ASTRAL.tree \
             ${output}/results/tree/ASTRAL/ASTRAL \
             ASTRAL \
@@ -895,8 +913,8 @@ fi
 mkdir ${output}/log/SpecDelim
 
 echo "***** Species delimitation with ASAP for each locus *****"
-
-conda activate ${wd}/envs/asap
+echo "WORKING DIR: $wd"
+conda activate ${ampdir}/envs/asap
 
 while IFS=$"," read -r primername fwd rev size; do
 
@@ -927,7 +945,7 @@ while IFS=$"," read -r primername fwd rev size; do
 
     echo "locus ${primername} finished"
 
-done <${primers}
+done <${wd}/${primers}
 
 ## run ASAP on concatenated FASTA if file not empty
 if
@@ -947,13 +965,14 @@ then
 fi
 conda deactivate
 
+cd $wd
 ## make HTML summary
 
 mkdir -p ${output}/Output
 
 echo "***** Summarize in HTML file *****"
 
-conda activate ${wd}/envs/python_dependencies
+conda activate ${ampdir}/envs/python_dependencies
 
 mkdir ${output}/results/html
 mkdir ${output}/log/html
@@ -961,7 +980,7 @@ mkdir ${output}/log/html
 ## visualize MSA
 unset SESSION_MANAGER
 
-${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/msa_to_html.py \
+${ampdir}/envs/python_dependencies/bin/python3 ${ampdir}/scripts/msa_to_html.py \
     -hap ${output}/results/haplotypes/ \
     -py "${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/msaviz.py" \
     -hf ${output}/results/html/MSA_analysis.html \
@@ -979,11 +998,11 @@ mkdir ${output}/.logos
 cp ${wd}/imgs/tettris.png ${output}/.logos/tettris.png
 cp ${wd}/imgs/nhm.svg.png ${output}/.logos/nhm.svg.png
 
-${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/altersvg.py \
+${ampdir}/envs/python_dependencies/bin/python3 ${ampdir}/scripts/altersvg.py \
     -f ${output}/results/SpeciesDelim/ \
     >>${output}/log/html/HTML.log 2>&1
 
-${wd}/envs/python_dependencies/bin/python3 ${wd}/scripts/DisplayOutput.py \
+${ampdir}/envs/python_dependencies/bin/python3 ${ampdir}/scripts/DisplayOutput.py \
     -p ${parametersettings} \
     -r ${output}/results \
     -out ${output}/Output \
