@@ -17,28 +17,41 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then #nothing to be done on MacOS
  DOCKER_USER=""
 fi
 
+# determine how AmpliPiper should be executed:
 
-HOW=""
-if command -v docker 2>&1 > /dev/null;
-then
+HOW="local"
+if [[ "$1" == "docker" ]]; then
+	HOW="docker"
+fi
+if [[ "$1" == "singularity" || "$1" == "apptainer" ]]; then
+	HOW="singularity"
+fi
+if [[ "$1" == "auto" ]]; then
+	if command -v docker 2>&1 > /dev/null;
+	then
 		HOW="docker"
-elif command -v singularity 2>&1 > /dev/null; #singularity is preferred over docker
-then
+	elif command -v singularity 2>&1 > /dev/null; #singularity is preferred over docker
+	then
 		HOW="singularity"
+	fi
 fi
 
-if [ "$HOW" == "docker" ]; then
+shift
+if [[ "$HOW" == "docker" ]]; then
 	BINDPOINTS="-v $(pwd):$(pwd)"
 	echo "Running AmpliPiper through docker"
 	echo "DOCKER COMMAND: docker run --rm -it $DOCKER_USER $BINDPOINTS -w $(pwd) reslp/amplipiper:test AmpliPiper.sh $@"
 	docker run --rm -it $DOCKER_USER $BINDPOINTS -w $(pwd) reslp/amplipiper:test AmpliPiper.sh $@	
 fi
 
-if [ "$HOW" == "singularity" ]; then
+if [[ "$HOW" == "singularity" ]]; then
 	BINDPOINTS="-B $(pwd)"
 	echo "Running AmpliPiper through singularity"
 	echo "SINGULARITY/APPTAINER COMMAND: singularity exec $BINDPOINTS docker://reslp/amplipiper:test AmpliPiper.sh $@"
 	singularity exec $BINDPOINTS docker://reslp/amplipiper:test AmpliPiper.sh $@	
 fi
-#Command will look something like this:
-#docker run --rm -it --user $(id -u):$(id -g) -v $(pwd):/home/$USER/phylociraptor --privileged reslp/phylociraptor:0.9.1
+
+if [[ "$HOW" == "local" ]]; then
+	echo "Running AmpliPiper locally"
+	bash shell/AmpliPiper.sh $@
+fi
