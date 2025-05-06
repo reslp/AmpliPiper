@@ -53,10 +53,8 @@ wd=$tmp  #${tmp%/*} ######## <- wd is now the base directory below the shell/ fo
 
 # extra check for container execution to account for different paths
 if [[ $AMICONTAINER == "yes" ]]; then
-	echo "I am in docker"
 	ampdir="/app/AmpliPiper"
 else
-	echo "I am local"
 	ampdir=$wd
 fi
 
